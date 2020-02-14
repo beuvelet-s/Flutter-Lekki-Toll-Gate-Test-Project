@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "561922466626",
+    "firebase_url": "https://paultestlogin.firebaseio.com",
+    "project_id": "paultestlogin",
+    "storage_bucket": "paultestlogin.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:561922466626:android:702b30e6f260308e35dedb",
+        "android_client_info": {
+          "package_name": "com.steph99.flutter_app_paul_test"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "561922466626-hganuve5rr958jc61o1fbt7l0ub8a68f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEQsN_7wdt0ffbSYeF40yhyI6GTiembFQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "561922466626-hganuve5rr958jc61o1fbt7l0ub8a68f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
