@@ -1,24 +1,24 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app_paul_test/pages/signup_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 
-class LoginSignupPage extends StatefulWidget {
-  LoginSignupPage({this.auth, this.loginCallback});
+class LoginPage extends StatefulWidget {
+  LoginPage({this.auth, this.loginCallback});
 
   final BaseAuth auth;
   final VoidCallback loginCallback;
 
   @override
-  State<StatefulWidget> createState() => new _LoginSignupPageState();
+  State<StatefulWidget> createState() => new _LoginPageState();
 }
 
-class _LoginSignupPageState extends State<LoginSignupPage> {
+class _LoginPageState extends State<LoginPage> {
   final _formKey = new GlobalKey<FormState>();
 
-  String _email;
-  String _password;
+  String _email = '';
+  String _password = '';
   String _errorMessage;
-
-  bool _isLoginForm;
   bool _isLoading;
 
   // Check if form is valid before perform login or signup
@@ -35,25 +35,18 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   void validateAndSubmit() async {
     setState(() {
       _errorMessage = "";
-      _isLoading = true;
     });
     if (validateAndSave()) {
       String userId = "";
+      _isLoading = true;
       try {
-        if (_isLoginForm) {
-          userId = await widget.auth.signIn(_email, _password);
-          print('Signed in: $userId');
-        } else {
-          userId = await widget.auth.signUp(_email, _password);
-          //widget.auth.sendEmailVerification();
-          //_showVerifyEmailSentDialog();
-          print('Signed up user: $userId');
-        }
+        userId = await widget.auth.signIn(_email, _password);
+
+        print('Signed in: $userId');
         setState(() {
           _isLoading = false;
         });
-
-        if (userId.length > 0 && userId != null && _isLoginForm) {
+        if (userId.length > 0 && userId != null) {
           widget.loginCallback();
         }
       } catch (e) {
@@ -61,7 +54,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         setState(() {
           _isLoading = false;
           _errorMessage = e.message;
-          _formKey.currentState.reset();
+//        _formKey.currentState.reset();
         });
       }
     }
@@ -71,20 +64,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   void initState() {
     _errorMessage = "";
     _isLoading = false;
-    _isLoginForm = true;
     super.initState();
   }
 
   void resetForm() {
     _formKey.currentState.reset();
     _errorMessage = "";
-  }
-
-  void toggleFormMode() {
-    resetForm();
-    setState(() {
-      _isLoginForm = !_isLoginForm;
-    });
   }
 
   @override
@@ -143,11 +128,11 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
             shrinkWrap: true,
             children: <Widget>[
               showLogo(),
-              SizedBox(height: 100),
               showExplanation(),
               showEmailInput(),
               showPasswordInput(),
-              showPrimaryButton(),
+              showIforgotmyPassword(),
+              showGetInButton(),
               showSecondaryButton(),
               showErrorMessage(),
             ],
@@ -175,8 +160,21 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget showLogo() {
     return new Hero(
       tag: 'hero',
+      flightShuttleBuilder: (
+        BuildContext flightContext,
+        Animation<double> animation,
+        HeroFlightDirection flightDirection,
+        BuildContext fromHeroContext,
+        BuildContext toHeroContext,
+      ) {
+        final Hero toHero = toHeroContext.widget;
+        return RotationTransition(
+          turns: animation,
+          child: toHero.child,
+        );
+      },
       child: Padding(
-        padding: EdgeInsets.fromLTRB(0.0, 70.0, 0.0, 0.0),
+        padding: EdgeInsets.fromLTRB(0.0, 40.0, 0.0, 0.0),
         child: CircleAvatar(
           backgroundColor: Colors.transparent,
           radius: 48.0,
@@ -188,27 +186,42 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
 
   Widget showExplanation() {
-    return new FlatButton(
-        child: new Text('Login to your account',
-            style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold)),
-        onPressed: () {});
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0.0, 70.0, 0.0, 0.0),
+      child: Center(
+        child: Container(
+            child: new Text('Login to your account',
+                style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold))),
+      ),
+    );
+    //  onPressed: () {});
   }
 
   Widget showEmailInput() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0.0, 100.0, 0.0, 0.0),
+      padding: const EdgeInsets.fromLTRB(30.0, 30.0, 30.0, 0.0),
       child: new TextFormField(
         maxLines: 1,
         keyboardType: TextInputType.emailAddress,
         autofocus: false,
         decoration: new InputDecoration(
-            hintText: 'Toll ID',
-            hintStyle: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey),
-            icon: new Icon(
-              Icons.mail,
-              color: Colors.grey,
-            )),
+          labelText: 'Toll ID',
+          alignLabelWithHint: false,
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          labelStyle: TextStyle(
+              fontSize: 25, fontWeight: FontWeight.bold, color: Colors.grey),
+//            icon: new Icon(
+//              Icons.mail,
+//              color: Colors.grey,
+//            ),
+        ),
         validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
         onSaved: (value) => _email = value.trim(),
       ),
@@ -217,46 +230,93 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   Widget showPasswordInput() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0.0, 15.0, 0.0, 0.0),
+      padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 0.0),
       child: new TextFormField(
         maxLines: 1,
         obscureText: true,
         autofocus: false,
         decoration: new InputDecoration(
-            hintText: 'Password',
-            hintStyle: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey),
-            icon: new Icon(
-              Icons.lock,
-              color: Colors.grey,
-            )),
+          labelText: 'Password',
+          alignLabelWithHint: false,
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          labelStyle: TextStyle(
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
+//          icon: new Icon(
+//            Icons.lock,
+//            color: Colors.grey,
+//          ),
+        ),
         validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
         onSaved: (value) => _password = value.trim(),
       ),
     );
   }
 
-  Widget showSecondaryButton() {
+  Widget showIforgotmyPassword() {
     return new FlatButton(
-        child: new Text(
-            _isLoginForm ? 'Create an account' : 'Have an account? Sign in',
-            style: new TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300)),
-        onPressed: toggleFormMode);
+        child: new Text('I forgot my password',
+            style: new TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+                color: Color(0x8FD97A00))),
+        onPressed: () {});
   }
 
-  Widget showPrimaryButton() {
+  Widget showSecondaryButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          'Don\'t have an account? ',
+          style: new TextStyle(
+            fontSize: 17.0,
+            fontWeight: FontWeight.w500,
+            color: Color(0xAFD97A00),
+          ),
+        ),
+        new FlatButton(
+            child: Text(
+              'Sign Up',
+              style: new TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+                color: Color(0xAFD97A00),
+              ),
+            ),
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SignupPage(
+                      auth: widget.auth,
+                    ),
+                  ));
+            }),
+      ],
+    );
+  }
+
+  Widget showGetInButton() {
     return new Padding(
-        padding: EdgeInsets.fromLTRB(0.0, 45.0, 0.0, 0.0),
+        padding: EdgeInsets.fromLTRB(80.0, 45.0, 80.0, 5.0),
         child: SizedBox(
-          height: 60.0,
-          child: new RaisedButton(
+          height: 66.0,
+          child: RaisedButton(
             elevation: 5.0,
             shape: new RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(30.0)),
+              borderRadius: new BorderRadius.circular(33.0),
+            ),
             color: Color(0xFFD97A00),
-            child: new Text(_isLoginForm ? 'Get In' : 'Sign Up',
+            child: new Text('Get In',
                 style: new TextStyle(
-                    fontSize: 27.0,
+                    fontSize: 23.0,
                     color: Colors.white,
                     fontWeight: FontWeight.bold)),
             onPressed: validateAndSubmit,

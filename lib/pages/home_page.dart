@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
 
   Query _todoQuery;
 
-  //bool _isEmailVerified = false;
+  bool _isEmailVerified = false;
 
   @override
   void initState() {
@@ -47,66 +47,67 @@ class _HomePageState extends State<HomePage> {
         _todoQuery.onChildChanged.listen(onEntryChanged);
   }
 
-//  void _checkEmailVerification() async {
-//    _isEmailVerified = await widget.auth.isEmailVerified();
-//    if (!_isEmailVerified) {
-//      _showVerifyEmailDialog();
-//    }
-//  }
+  void _checkEmailVerification() async {
+    _isEmailVerified = await widget.auth.isEmailVerified();
+    if (!_isEmailVerified) {
+      _showVerifyEmailDialog();
+    }
+  }
 
-//  void _resentVerifyEmail(){
-//    widget.auth.sendEmailVerification();
-//    _showVerifyEmailSentDialog();
-//  }
+  void _resentVerifyEmail() {
+    widget.auth.sendEmailVerification();
+    _showVerifyEmailSentDialog();
+  }
 
-//  void _showVerifyEmailDialog() {
-//    showDialog(
-//      context: context,
-//      builder: (BuildContext context) {
-//        // return object of type Dialog
-//        return AlertDialog(
-//          title: new Text("Verify your account"),
-//          content: new Text("Please verify account in the link sent to email"),
-//          actions: <Widget>[
-//            new FlatButton(
-//              child: new Text("Resent link"),
-//              onPressed: () {
-//                Navigator.of(context).pop();
-//                _resentVerifyEmail();
-//              },
-//            ),
-//            new FlatButton(
-//              child: new Text("Dismiss"),
-//              onPressed: () {
-//                Navigator.of(context).pop();
-//              },
-//            ),
-//          ],
-//        );
-//      },
-//    );
-//  }
+  void _showVerifyEmailDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title: new Text("Verify your account"),
+          content: new Text("Please verify account in the link sent to email"),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("Resent link"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resentVerifyEmail();
+              },
+            ),
+            new FlatButton(
+              child: new Text("Dismiss"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-//  void _showVerifyEmailSentDialog() {
-//    showDialog(
-//      context: context,
-//      builder: (BuildContext context) {
-//        // return object of type Dialog
-//        return AlertDialog(
-//          title: new Text("Verify your account"),
-//          content: new Text("Link to verify account has been sent to your email"),
-//          actions: <Widget>[
-//            new FlatButton(
-//              child: new Text("Dismiss"),
-//              onPressed: () {
-//                Navigator.of(context).pop();
-//              },
-//            ),
-//          ],
-//        );
-//      },
-//    );
-//  }
+  void _showVerifyEmailSentDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title: new Text("Verify your account"),
+          content:
+              new Text("Link to verify account has been sent to your email"),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("Dismiss"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -247,23 +248,186 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        appBar: new AppBar(
-          title: new Text('Flutter login demo'),
-          actions: <Widget>[
-            new FlatButton(
-                child: new Text('Logout',
-                    style: new TextStyle(fontSize: 17.0, color: Colors.white)),
-                onPressed: signOut)
-          ],
+    return Scaffold(
+      body: WillPopScope(
+        // ignore: missing_return
+        onWillPop: () async {
+          Future.value(false);
+        },
+        child: SafeArea(
+          child: Material(
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+//                title: Text('Hello World'),
+                    leading: new Container(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(Icons.sort,
+                            size: 40, color: Color(0xFFD97A00)),
+                      ),
+                    ),
+                    backgroundColor: Colors.white,
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: new Text('Logout',
+                              style: new TextStyle(
+                                  fontSize: 17.0, color: Colors.black)),
+                          onPressed: signOut)
+                    ]),
+                SliverPersistentHeader(
+                  delegate: MySliverAppBar(expandedHeight: 400),
+                  pinned: true,
+                ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) => ListTile(
+                      title: Text("Index: $index"),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
         ),
-        body: showTodoList(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            showAddTodoDialog(context);
-          },
-          tooltip: 'Increment',
-          child: Icon(Icons.add),
-        ));
+      ),
+    );
+
+//    Scaffold(
+//        appBar: new AppBar(
+//          title: new Text('Flutter login demo'),
+//          actions: <Widget>[
+//            new FlatButton(
+//                child: new Text('Logout',
+//                    style: new TextStyle(fontSize: 17.0, color: Colors.white)),
+//                onPressed: signOut)
+//          ],
+//        ),
+//        body: showTodoList(),
+//        floatingActionButton: FloatingActionButton(
+//          onPressed: () {
+//            showAddTodoDialog(context);
+//          },
+//          tooltip: 'Increment',
+//          child: Icon(Icons.add),
+//        ));
   }
+}
+
+class MySliverAppBar extends SliverPersistentHeaderDelegate {
+  final double expandedHeight;
+
+  MySliverAppBar({@required this.expandedHeight});
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Stack(
+      fit: StackFit.expand,
+      overflow: Overflow.visible,
+      children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12.0, 0, 0, 0),
+            child: Text('Hello _name,',
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.bold)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12.0, 0, 0, 0),
+            child: Text('Good morning.',
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.bold)),
+          ),
+          SizedBox(height: 40),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12.0, 0, 12, 0),
+            child: Container(height: 100, color: Color(0xFFEBD8BF)),
+          ),
+          SizedBox(height: 20),
+          Container(height: 6.0, color: Color(0xFFEBD8BF)),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Container(
+                  height: 100,
+                  width: 100,
+                  color: Color(0xFFEBD8BF),
+                  child: Column(
+                    children: <Widget>[
+                      Icon(Icons.directions_car),
+                      Text('Add/Remove Vehicle',
+                          style: TextStyle(fontSize: 10, color: Colors.black45))
+                    ],
+                  )),
+              Container(height: 100, width: 100, color: Color(0xFFEBD8BF)),
+              Container(height: 100, width: 100, color: Color(0xFFEBD8BF)),
+            ],
+          )
+        ]),
+        //        Image.asset(
+//          'assets/lekkibridge.jpg',
+//          fit: BoxFit.cover,
+//        ),
+        Center(
+          child: Opacity(
+            opacity: shrinkOffset / expandedHeight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(Icons.sort, color: Colors.white),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Image.asset(
+                      'assets/logoLCCLekki.png',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+//        Positioned(
+//          top: expandedHeight / 2 - shrinkOffset,
+//          left: MediaQuery.of(context).size.width / 4,
+//          child: Opacity(
+//            opacity: (1 - shrinkOffset / expandedHeight),
+//            child: Card(
+//              elevation: 10,
+//              child: SizedBox(
+//                height: expandedHeight,
+//                width: MediaQuery.of(context).size.width / 2,
+//                child: Image.asset(
+//                  'assets/logoLCCLekki.png',
+//                  fit: BoxFit.contain,
+//                ),
+//              ),
+//            ),
+//          ),
+//        ),
+      ],
+    );
+  }
+
+  @override
+  double get maxExtent => expandedHeight;
+
+  @override
+  double get minExtent => kToolbarHeight;
+
+  @override
+  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) => true;
 }

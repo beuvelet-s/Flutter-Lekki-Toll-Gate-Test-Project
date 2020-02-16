@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app_paul_test/pages/login_signup_page.dart';
+import 'package:flutter_app_paul_test/pages/account_created_page.dart';
+import 'package:flutter_app_paul_test/pages/login_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 
@@ -70,9 +71,13 @@ class _RootPageState extends State<RootPage> {
         return buildWaitingScreen();
         break;
       case AuthStatus.NOT_LOGGED_IN:
-        return new LoginSignupPage(
-          auth: widget.auth,
-          loginCallback: loginCallback,
+        return Center(
+          child: Center(
+            child: new LoginPage(
+              auth: widget.auth,
+              loginCallback: loginCallback,
+            ),
+          ),
         );
         break;
       case AuthStatus.LOGGED_IN:
@@ -82,6 +87,7 @@ class _RootPageState extends State<RootPage> {
             auth: widget.auth,
             logoutCallback: logoutCallback,
           );
+          //         return new AccountCreatedPage();
         } else
           return buildWaitingScreen();
         break;

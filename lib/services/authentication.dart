@@ -22,6 +22,15 @@ class Auth implements BaseAuth {
     AuthResult result = await _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
     FirebaseUser user = result.user;
+//    try {
+//      print("email verification sent!");
+//      await user.sendEmailVerification();
+//      return user.uid;
+//    } catch (e) {
+//      print("An error occured while trying to send email        verification");
+//      print(e.message);
+//    }
+
     return user.uid;
   }
 
