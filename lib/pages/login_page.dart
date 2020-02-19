@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app_paul_test/pages/signup_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 
@@ -223,6 +224,9 @@ class _LoginPageState extends State<LoginPage> {
 //            ),
         ),
         validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
+        inputFormatters: [
+          BlacklistingTextInputFormatter(new RegExp(r"\s\b|\b\s"))
+        ],
         onSaved: (value) => _email = value.trim(),
       ),
     );
@@ -319,7 +323,10 @@ class _LoginPageState extends State<LoginPage> {
                     fontSize: 23.0,
                     color: Colors.white,
                     fontWeight: FontWeight.bold)),
-            onPressed: validateAndSubmit,
+            onPressed: () {
+              validateAndSubmit();
+//              Navigator.of(context).pop();
+            },
           ),
         ));
   }

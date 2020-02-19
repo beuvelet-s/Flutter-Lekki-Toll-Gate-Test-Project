@@ -31,14 +31,17 @@ class AccountCreatedPage extends StatelessWidget {
                     height: 1.0,
                     fontWeight: FontWeight.bold),
               ),
-              Text(
-                "A Link to verify account has been sent to your email",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.black,
-                    height: 1.0,
-                    fontWeight: FontWeight.bold),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "A Link to verify account has been sent to your email",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.black,
+                      height: 1.0,
+                      fontWeight: FontWeight.bold),
+                ),
               ),
               Padding(
                   padding: EdgeInsets.fromLTRB(00.0, 40.0, 00.0, 5.0),

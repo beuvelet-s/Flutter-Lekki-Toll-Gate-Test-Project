@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_app_paul_test/pages/account_created_page.dart';
@@ -45,6 +46,7 @@ class _SignupPageState extends State<SignupPage> {
     });
     if (validateAndSave()) {
       String userId = "";
+      FirebaseUser user;
       setState(() {
         _isLoading = true;
       });
@@ -54,14 +56,30 @@ class _SignupPageState extends State<SignupPage> {
 //        print('Phone = $_phone');
 //        print('Password = $_password');
 
-        userId = await widget.auth.signUp(_email.trim(), _password.trim());
+        user = await widget.auth.signUp(_email.trim(), _password.trim());
+        userId = user.uid;
         widget.auth.sendEmailVerification();
+
 //        _showVerifyEmailSentDialog();
-        AccountCreatedPage();
         print('Signed up user: $userId');
+
+        if (user != null) {
+          UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
+          userUpdateInfo.displayName = _name;
+//          userUpdateInfo.photoUrl = _url;
+//          await widget.auth.updateProfile(userUpdateInfo); //update the info
+
+          await user
+              .updateProfile(userUpdateInfo)
+              .then((s) => print('User Name updated successfully'));
+        }
+        await user.reload(); //
+
         setState(() {
           _isLoading = false;
         });
+
+        Navigator.pushNamed(context, '/accountcreated');
 //        Navigator.pop(context);
       } catch (e) {
         print('Error: $e');
@@ -204,6 +222,7 @@ class _SignupPageState extends State<SignupPage> {
     if (_errorMessage.length > 0 && _errorMessage != null) {
       return new Text(
         _errorMessage,
+        textAlign: TextAlign.center,
         style: TextStyle(
             fontSize: 16.0,
             color: Colors.red,
@@ -234,7 +253,7 @@ class _SignupPageState extends State<SignupPage> {
         );
       },
       child: Padding(
-        padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+        padding: EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
         child: CircleAvatar(
           backgroundColor: Colors.transparent,
           radius: 48.0,
@@ -247,7 +266,7 @@ class _SignupPageState extends State<SignupPage> {
 
   Widget showExplanation() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.0, 30.0, 0.0, 0.0),
+      padding: EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
       child: Center(
         child: Container(
             child: new Text('Create Account',
@@ -467,7 +486,6 @@ class _SignupPageState extends State<SignupPage> {
             onPressed: () {
               FocusScope.of(context).unfocus();
               validateAndSubmit();
-              Navigator.pushNamed(context, '/accountcreated');
             },
           ),
         ));

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_paul_test/pages/account_created_page.dart';
 import 'package:flutter_app_paul_test/pages/login_page.dart';
@@ -22,6 +23,7 @@ class RootPage extends StatefulWidget {
 class _RootPageState extends State<RootPage> {
   AuthStatus authStatus = AuthStatus.NOT_DETERMINED;
   String _userId = "";
+  FirebaseUser _current_user;
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _RootPageState extends State<RootPage> {
       setState(() {
         if (user != null) {
           _userId = user?.uid;
+          _current_user = user;
         }
         authStatus =
             user?.uid == null ? AuthStatus.NOT_LOGGED_IN : AuthStatus.LOGGED_IN;
@@ -73,10 +76,8 @@ class _RootPageState extends State<RootPage> {
       case AuthStatus.NOT_LOGGED_IN:
         return Center(
           child: Center(
-            child: new LoginPage(
-              auth: widget.auth,
-              loginCallback: loginCallback,
-            ),
+            child:
+                new LoginPage(auth: widget.auth, loginCallback: loginCallback),
           ),
         );
         break;
@@ -86,6 +87,7 @@ class _RootPageState extends State<RootPage> {
             userId: _userId,
             auth: widget.auth,
             logoutCallback: logoutCallback,
+            currentuser: _current_user,
           );
           //         return new AccountCreatedPage();
         } else
