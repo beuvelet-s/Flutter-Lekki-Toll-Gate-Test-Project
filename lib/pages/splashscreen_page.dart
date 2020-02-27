@@ -45,9 +45,7 @@ class SplashScreen extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => RootPage(
-                  auth: new Auth(),
-                ),
+                builder: (_) => RootPage(),
               ),
             );
 //                AnimatedMaterialPageRoute(
