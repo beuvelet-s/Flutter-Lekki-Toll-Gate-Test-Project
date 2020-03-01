@@ -16,20 +16,20 @@ class AccountCreatedPage extends StatelessWidget {
     var _onPressed;
 
     Future<String> generate_tollID(String user_id) async {
-      var ref = db.collection("tollidcards");
       String _tollid = '';
+      var ref = db.collection("tollidcards");
       await ref.add({
         "userid": user_id,
         "tollidtime": FieldValue.serverTimestamp(),
         "tollidserial": ''
-      }).then((docref) {
+      }).then((docref) async {
         print('docref = $docref');
-        ref.document(docref.documentID).get().then((doc) {
+        await ref.document(docref.documentID).get().then((doc) async {
           if (doc.exists) {
             _tollid = doc.data['tollidtime'].seconds.toString() +
                 doc.data['tollidtime'].nanoseconds.toString().substring(1, 4);
             // Update tollidserial
-            ref.document(doc.documentID).updateData({
+            await ref.document(doc.documentID).updateData({
               "tollidserial": _tollid,
             }).then((docupdate) {
               print("tollidserial = $_tollid");
@@ -49,24 +49,27 @@ class AccountCreatedPage extends StatelessWidget {
 
     _createUSer() async {
       // create a new user
-      try {
-        FirebaseUser user = await auth.getCurrentUser();
-        String user_id = user.uid;
-        String tollid = await generate_tollID(user_id);
-        await db.collection("users").document(user_id).setData({
-          "userid": user_id,
-          "balance": 0,
-          "email": user.email,
-          "name": user.displayName,
+      String user_id = "";
+      FirebaseUser user;
+      await auth.getCurrentUser().then((FirebaseUser user) async {
+        user_id = user.uid;
+        await generate_tollID(user_id).then((tollid) async {
+          print("tollid in CreateUSer = $tollid");
+          await db.collection("users").document(user_id).setData({
+            "userid": user_id,
+            "balance": 0,
+            "email": user.email,
+            "name": user.displayName,
 // TODO   "photourl": user.photoUrl;
-          "nbofvehicles": 0,
-          "tollid": tollid,
-        }).then((user) {
-          print("tollid = $tollid");
+            "nbofvehicles": 0,
+            "tollid": tollid,
+          });
+        }).catchError((e) {
+          print("update tollid in users: $e");
         });
-      } catch (err) {
-        print(err);
-      }
+      }).catchError((e) {
+        print("auth.getcurrentuser $e");
+      });
     }
 
     void _resentVerifyEmail() {
@@ -108,7 +111,7 @@ class AccountCreatedPage extends StatelessWidget {
       bool emailverif = await auth.isEmailVerified();
       if (emailverif == true) {
         print("email Verified!");
-        _createUSer();
+        await _createUSer();
         Navigator.pushNamed(context, '/home');
 //        Navigator.of(context).pop();
       } else

@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_paul_test/pages/account_created_page.dart';
+import 'package:flutter_app_paul_test/pages/forgotpassword_page.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 import 'package:flutter_app_paul_test/pages/login_page.dart';
 import 'package:flutter_app_paul_test/pages/payment_page.dart';
+import 'package:flutter_app_paul_test/pages/signup_page.dart';
 import 'package:flutter_app_paul_test/pages/splashscreen_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:provider/provider.dart';
@@ -41,10 +43,11 @@ class MyApp extends StatelessWidget {
             '/accountcreated': (context) => AccountCreatedPage(),
             '/home': (context) => HomePage(),
             '/pay': (context) => PaymentPage(),
+            '/signup': (context) => SignupPage(),
+            '/forgotpassword': (context) => ForgotPasswordPage(),
           },
           theme: new ThemeData(
-            primarySwatch: Colors.blue,
-          ),
+              primarySwatch: Colors.blue, accentColor: Color(0xFFD97A00)),
 //        home: SplashScreen()
         ));
   }

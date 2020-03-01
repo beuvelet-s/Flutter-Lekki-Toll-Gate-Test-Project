@@ -5,6 +5,7 @@ class Strings {
   static const String fieldReq = 'This field is required';
   static const String numberIsInvalid = 'Card is invalid';
   static const String pay = 'Pay';
+  static const String numberIsTooSmall = 'Amount need to be > 1000.00';
 }
 
 class PaymentCard {
@@ -195,6 +196,18 @@ class CardUtils {
       widget = icon;
     }
     return widget;
+  }
+
+  static String validateAmount(String input) {
+    if (input.isEmpty) {
+      return Strings.fieldReq;
+    }
+
+    input = getCleanedNumber(input);
+
+    if (int.parse(input) < 100000) {
+      return Strings.numberIsTooSmall;
+    }
   }
 
   /// With the card number with Luhn Algorithm

@@ -10,6 +10,7 @@ import 'package:flutter_app_paul_test/pages/account_created_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/input_formatters.dart';
 import 'package:flutter_app_paul_test/services/payment_card.dart';
+import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -24,10 +25,13 @@ class _PaymentPageState extends State<PaymentPage> {
   bool _isLoading;
   var _paymentCard = PaymentCard();
   final TextEditingController _cardnumcontrol = TextEditingController();
+  final TextEditingController _cardnumcontrolAmount = TextEditingController();
+
   final _formKeypay = new GlobalKey<FormState>();
   var _sourceofFund = 'Debit Card';
   FirebaseUser currentuser;
   String userId;
+  bool _autoValidate = false;
 
   void _getCardTypeFrmNumber() {
     String input = CardUtils.getCleanedNumber(_cardnumcontrol.text);
@@ -56,10 +60,11 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Future<String> PaywithPaystack(url, headerData, bodydata) async {
+    var bodyjson = json.encode(bodydata);
     await http
         .post(Uri.parse(url),
             headers: headerData,
-            body: json.encode(bodydata),
+            body: bodyjson,
             encoding: Encoding.getByName("utf-8"))
         .then((result) {
       if (result.statusCode == 200) {
@@ -83,7 +88,6 @@ class _PaymentPageState extends State<PaymentPage> {
 //    String _cvv = '';
     String _amount = '';
 //    String _PIN = '';
-    bool _autoValidate = false;
 
     Future<String> Charge() async {
 //Payment Charge using http POST request
@@ -219,8 +223,8 @@ class _PaymentPageState extends State<PaymentPage> {
     }
 
     String validateAmount(String value) {
-      if (int.parse(value) <= 0)
-        return 'Amount must be more than 0';
+      if (int.parse(value) <= 100000)
+        return 'Amount must be more than 1000.00';
       else {
         return null;
       }
@@ -383,8 +387,8 @@ class _PaymentPageState extends State<PaymentPage> {
 //              ],
               inputFormatters: [
                 WhitelistingTextInputFormatter.digitsOnly,
-                new LengthLimitingTextInputFormatter(19),
-                new CardNumberInputFormatter(),
+                LengthLimitingTextInputFormatter(19),
+                CardNumberInputFormatter(),
 //                MaskTextInputFormatter(
 //                    mask: '####-####-####-####',
 //                    filter: {"#": RegExp(r'[0-9]')})
@@ -405,7 +409,7 @@ class _PaymentPageState extends State<PaymentPage> {
     Widget showExpiryDateInput() {
       return Flexible(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(50.0, 15.0, 30.0, 0.0),
+          padding: const EdgeInsets.fromLTRB(50.0, 15.0, 10.0, 0.0),
           child: new TextFormField(
             maxLines: 1,
             keyboardType: TextInputType.number,
@@ -458,7 +462,7 @@ class _PaymentPageState extends State<PaymentPage> {
     Widget showCVVInput() {
       return Flexible(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(30.0, 15.0, 50.0, 0.0),
+          padding: const EdgeInsets.fromLTRB(10.0, 15.0, 50.0, 0.0),
           child: new TextFormField(
             maxLines: 1,
             keyboardType: TextInputType.number,
@@ -522,6 +526,7 @@ class _PaymentPageState extends State<PaymentPage> {
             contentPadding:
                 EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
             labelText: 'Enter Amount',
+            hintText: '######.##',
             alignLabelWithHint: false,
             enabledBorder: OutlineInputBorder(
               borderSide: const BorderSide(color: Colors.grey, width: 1.0),
@@ -540,14 +545,24 @@ class _PaymentPageState extends State<PaymentPage> {
 //            ),
           ),
 //        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
-          validator: validateAmount,
+          controller: _cardnumcontrolAmount,
+//          validator: validateAmount,
+          validator: CardUtils.validateAmount,
           inputFormatters: [
-            BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
+            WhitelistingTextInputFormatter.digitsOnly,
+            new LengthLimitingTextInputFormatter(8),
+            CurrencyPtBrInputFormatter()
           ],
+//          inputFormatters: [
+//            BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
+//          ],
           onSaved: (value) {
-            _amount = value;
+            _amount = CardUtils.getCleanedNumber(value);
           },
-//          onSaved: (value) => _amount = value,
+//          onSaved: (value) {
+//            _amount = Paymvalue;
+//          },
+////          onSaved: (value) => _amount = value,
         ),
       );
     }
@@ -621,6 +636,7 @@ class _PaymentPageState extends State<PaymentPage> {
 //                FocusScope.of(context).unfocus();
                 if (await validateAndSubmitPay() == true) {
                   var result = await Charge();
+                  print('result Paystack = $result');
                   Navigator.pushNamed(context, '/home');
                 }
               },

@@ -6,6 +6,7 @@ import 'package:flutter_app_paul_test/pages/login_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 //import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_app_paul_test/models/todo.dart';
+import 'package:flutter_app_paul_test/services/flushbar_service.dart';
 import 'dart:async';
 
 import 'package:intl/intl.dart';
@@ -30,6 +31,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   FirebaseUser currentuser;
   String userId;
+  String user_name;
 
   @override
   void initState() {
@@ -43,6 +45,11 @@ class _HomePageState extends State<HomePage> {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
     currentuser = await auth.getCurrentUser();
     userId = currentuser.uid;
+    user_name = currentuser.displayName;
+    normalflushbar(
+        context: context,
+        message: 'Welcome Back ${user_name.split(" ")[0]} !',
+        duration: 3);
   }
 
   int selectedIndex = 0;

@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_app_paul_test/pages/signup_page.dart';
@@ -7,19 +6,20 @@ import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/flushbar_service.dart';
 import 'package:provider/provider.dart';
 
-class LoginPage extends StatefulWidget {
+class ForgotPasswordPage extends StatefulWidget {
 //LoginPage({this.context});
 //final BuildContext context;
 //  final VoidCallback loginCallback;
 
   @override
-  State<StatefulWidget> createState() => new _LoginPageState();
+  State<StatefulWidget> createState() => new _ForgotPasswordPageState();
 //}
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   String _errorMessage;
   bool _isLoading;
+  String _email = '';
 
   @override
   void initState() {
@@ -32,8 +32,18 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
     final _formKey = new GlobalKey<FormState>();
-    String _email = '';
+
     String _password = '';
+
+    String validateEmail(String value) {
+      Pattern pattern =
+          r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+      RegExp regex = new RegExp(pattern);
+      if (!regex.hasMatch(value))
+        return 'Enter Valid Email';
+      else
+        return null;
+    }
 
     // Check if form is valid before perform login or signup
     bool Formvalidated() {
@@ -52,18 +62,18 @@ class _LoginPageState extends State<LoginPage> {
       });
       bool _validated = false;
       if (Formvalidated()) {
-        FirebaseUser user;
         String userId;
-        String user_name;
         setState(() {
           _isLoading = true;
         });
 
         try {
-          user = await auth.signInWithEmailAndPassword(_email, _password);
-          userId = user.uid;
-          user_name = user.displayName;
-          print('Signed in: $user_name');
+          auth.sendPasswordResetEmail(_email);
+          normalflushbar(
+              context: context,
+              message: 'Password reset email sent to $_email !',
+              duration: 3);
+          print('Reset email sent');
           setState(() {
             _isLoading = false;
             _validated = true;
@@ -74,9 +84,6 @@ class _LoginPageState extends State<LoginPage> {
             _isLoading = false;
             _errorMessage = e.message;
           });
-
-//        _formKey.currentState.reset();
-
         }
       }
       return _validated;
@@ -149,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
         padding: EdgeInsets.fromLTRB(0.0, 70.0, 0.0, 0.0),
         child: Center(
           child: Container(
-              child: new Text('Login to your account',
+              child: new Text('Forgot your Password ?',
                   style:
                       TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold))),
         ),
@@ -165,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
           keyboardType: TextInputType.emailAddress,
           autofocus: false,
           decoration: new InputDecoration(
-            labelText: 'Toll ID',
+            labelText: 'Email',
             alignLabelWithHint: false,
             enabledBorder: OutlineInputBorder(
               borderSide: const BorderSide(color: Colors.grey, width: 1.0),
@@ -183,7 +190,7 @@ class _LoginPageState extends State<LoginPage> {
 //              color: Colors.grey,
 //            ),
           ),
-          validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
+          validator: validateEmail,
           inputFormatters: [
             BlacklistingTextInputFormatter(new RegExp(r"\s\b|\b\s"))
           ],
@@ -192,86 +199,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
 
-    Widget showPasswordInput() {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 0.0),
-        child: new TextFormField(
-          maxLines: 1,
-          obscureText: true,
-          autofocus: false,
-          decoration: new InputDecoration(
-            labelText: 'Password',
-            alignLabelWithHint: false,
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide:
-                  const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            labelStyle: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
-//          icon: new Icon(
-//            Icons.lock,
-//            color: Colors.grey,
-//          ),
-          ),
-          validator: (value) =>
-              value.isEmpty ? 'Password can\'t be empty' : null,
-          onSaved: (value) => _password = value.trim(),
-        ),
-      );
-    }
-
-    Widget showIforgotmyPassword() {
-      return new FlatButton(
-          child: new Text('I forgot my password',
-              style: new TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0x8FD97A00))),
-          onPressed: () {
-            Navigator.pushNamed(context, '/forgotpassword');
-          });
-    }
-
-    Widget showSecondaryButton() {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            'Don\'t have an account? ',
-            style: new TextStyle(
-              fontSize: 17.0,
-              fontWeight: FontWeight.w500,
-              color: Color(0xAFD97A00),
-            ),
-          ),
-          new FlatButton(
-              child: Text(
-                'Sign Up',
-                style: new TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xAFD97A00),
-                ),
-              ),
-              onPressed: () {
-                Navigator.pushNamed(context, '/signup');
-//                Navigator.push(
-//                    context,
-//
-////                    MaterialPageRoute(
-//                      builder: (context) => SignupPage(),
-//                    ));
-              }),
-        ],
-      );
-    }
-
-    Widget showGetInButton() {
+    Widget showSubmitButton() {
       return new Padding(
           padding: EdgeInsets.fromLTRB(80.0, 45.0, 80.0, 5.0),
           child: SizedBox(
@@ -282,18 +210,45 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: new BorderRadius.circular(33.0),
               ),
               color: Color(0xFFD97A00),
-              child: new Text('Get In',
+              child: new Text('Reset Password',
                   style: new TextStyle(
                       fontSize: 23.0,
                       color: Colors.white,
                       fontWeight: FontWeight.bold)),
-              onPressed: () async {
-                if (await validateAndSubmit() == true) {
-                  Navigator.pushNamed(context, '/home');
-                }
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+                validateAndSubmit();
               },
             ),
           ));
+    }
+
+    Widget showSigninButton() {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Have you remembered ? ',
+            style: new TextStyle(
+              fontSize: 17.0,
+              fontWeight: FontWeight.w500,
+              color: Color(0xAFD97A00),
+            ),
+          ),
+          new FlatButton(
+              child: Text(
+                'Sign In',
+                style: new TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xAFD97A00),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pushNamed(context, '/login');
+              }),
+        ],
+      );
     }
 
     Widget _showForm() {
@@ -307,11 +262,9 @@ class _LoginPageState extends State<LoginPage> {
                 showLogo(),
                 showExplanation(),
                 showEmailInput(),
-                showPasswordInput(),
-                showGetInButton(),
-                showIforgotmyPassword(),
                 showErrorMessage(),
-                showSecondaryButton(),
+                showSubmitButton(),
+                showSigninButton(),
               ],
             ),
           ));

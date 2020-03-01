@@ -23,7 +23,8 @@ class User {
 
 //
 abstract class BaseAuth {
-  Future<String> signInWithEmailAndPassword(String email, String password);
+  Future<FirebaseUser> signInWithEmailAndPassword(
+      String email, String password);
 
   Future<String> createUserWithEmailAndPassword(String email, String password);
 
@@ -34,6 +35,8 @@ abstract class BaseAuth {
   Future<void> sendEmailVerification();
 
   Future<bool> isEmailVerified();
+
+  Future<void> sendPasswordResetEmail(String email);
 }
 
 //class FireStoreService {
@@ -45,12 +48,12 @@ class AuthService implements BaseAuth {
 
   get onAuthStateChanged => _firebaseAuth.onAuthStateChanged;
 
-  Future<String> signInWithEmailAndPassword(
+  Future<FirebaseUser> signInWithEmailAndPassword(
       String email, String password) async {
     AuthResult result = await _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
     final FirebaseUser user = result.user;
-    return user?.uid;
+    return user;
   }
 
   Future<String> createUserWithEmailAndPassword(
@@ -74,6 +77,11 @@ class AuthService implements BaseAuth {
   Future<void> sendEmailVerification() async {
     FirebaseUser user = await _firebaseAuth.currentUser();
     user.sendEmailVerification();
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
 //  Future<void> reload() async {
@@ -191,10 +199,7 @@ class AuthService implements BaseAuth {
 //    authService.sendEmailVerification();
 //  }
 //
-//  @override
-//  Future<void> sendPasswordResetEmail(String email) =>
-//      authService.sendPasswordResetEmail(email);
-//
+
 //  @override
 //  Future<User> signInWithEmailAndLink({String email, String link}) =>
 //      authService.signInWithEmailAndLink(email: email, link: link);

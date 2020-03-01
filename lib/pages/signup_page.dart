@@ -1,8 +1,12 @@
+import 'package:country_code_picker/country_code.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_app_paul_test/pages/account_created_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
+import 'package:flutter_app_paul_test/services/country_service.dart';
+import 'package:flutter_app_paul_test/services/input_formatters.dart';
+import 'package:flutter_app_paul_test/services/payment_card.dart';
 import 'package:provider/provider.dart';
 
 class SignupPage extends StatefulWidget {
@@ -16,28 +20,27 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  String _errorMessage;
-  bool _isLoading;
+  final _formKey = new GlobalKey<FormState>();
+  final TextEditingController _pass = TextEditingController();
+  final TextEditingController _confirmPass = TextEditingController();
+
+  String _errorMessage = "";
+  bool _isLoading = false;
+  String _countrycode = '';
+  String _name = '';
+  String _email = '';
+  String _password = '';
+  String _phone = '';
+  bool _autoValidate = false;
 
   @override
   void initState() {
-    _errorMessage = "";
-    _isLoading = false;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
-    final _formKey = new GlobalKey<FormState>();
-    final TextEditingController _pass = TextEditingController();
-    final TextEditingController _confirmPass = TextEditingController();
-
-    String _name = '';
-    String _email = '';
-    String _password = '';
-    String _phone = '';
-    bool _autoValidate = false;
 
     // Check if form is valid before perform login or signup
     bool validateAndSave() {
@@ -45,11 +48,14 @@ class _SignupPageState extends State<SignupPage> {
       if (form.validate()) {
         form.save();
         return true;
+      } else {
+        setState(() {
+          _autoValidate = true;
+        });
+        return false;
       }
-      return false;
     }
 
-    // Perform login or signup
     void validateAndSubmit() async {
       setState(() {
         _errorMessage = "";
@@ -63,26 +69,19 @@ class _SignupPageState extends State<SignupPage> {
         try {
           userId = await auth.createUserWithEmailAndPassword(
               _email.trim(), _password.trim());
-//          userId = user.uid;
-
           auth.sendEmailVerification();
-
+// Update Display Name in authentication Firebase user
           auth.getCurrentUser().then((val) {
             UserUpdateInfo updateUser = UserUpdateInfo();
             updateUser.displayName = _name;
 //            updateUser.photoUrl = picURL;
             val.updateProfile(updateUser);
           });
-
-//        _showVerifyEmailSentDialog();
           print('Signed up user: $userId');
-
           setState(() {
             _isLoading = false;
           });
-
           Navigator.pushNamed(context, '/accountcreated');
-//        Navigator.pop(context);
         } catch (e) {
           print('Error: $e');
           setState(() {
@@ -117,15 +116,15 @@ class _SignupPageState extends State<SignupPage> {
     }
 
     String validatePhone(String value) {
-//  Phone number are of 10 digit only
-      if (value.length != 10)
-        return 'Phone Number must be of 10 digit';
+// TODO Check digits number required for all other countries
+      if (value.length != 18 && _countrycode == '+234')
+        return 'Phone Number must be of 11 digit including leading (0)';
       else
         return null;
     }
 
     String validatePassword(String value) {
-// Phone number are of 10 digit only
+// PAssword are of minimum 6 digit only
       if (value.length < 6)
         return 'Password must be of minimum 6 digit';
       else {
@@ -271,46 +270,79 @@ class _SignupPageState extends State<SignupPage> {
 
     Widget showPhoneInput() {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 0.0),
-        child: new TextFormField(
-          maxLines: 1,
-          keyboardType: TextInputType.phone,
-          autofocus: false,
-          decoration: new InputDecoration(
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-            labelText: 'Phone',
-            alignLabelWithHint: false,
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-              borderRadius: BorderRadius.circular(8.0),
+        padding: const EdgeInsets.fromLTRB(0, 15, 0, 0),
+        child: Row(
+          children: <Widget>[
+            SizedBox(width: 30),
+            Expanded(
+              flex: 1,
+              child: CountryCodePickerCustom(
+                textStyle: TextStyle(fontSize: 16),
+                onChanged: (CountryCode code) => {_countrycode = code.dialCode},
+                // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
+                initialSelection: 'NG',
+                favorite: ['+234', 'NG'],
+                // optional. Shows only country name and flag
+                showCountryOnly: true,
+                // optional. Shows only country name and flag when popup is closed.
+                showOnlyCountryWhenClosed: false,
+                // optional. aligns the flag and the Text left
+                alignLeft: false,
+              ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderSide:
-                  const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            labelStyle: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+            Expanded(
+              flex: 3,
+              child: new TextFormField(
+                maxLines: 1,
+                keyboardType: TextInputType.phone,
+                autofocus: false,
+                decoration: new InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                  labelText: 'Phone',
+                  hintText: '(0)## ## ## ## ##',
+                  alignLabelWithHint: false,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  labelStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey),
 //            icon: new Icon(
 //              Icons.mail,
 //              color: Colors.grey,
 //            ),
-          ),
+                ),
 //        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
-          validator: validatePhone,
-          inputFormatters: [
-            BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
+                validator: validatePhone,
+                inputFormatters: [
+                  WhitelistingTextInputFormatter.digitsOnly,
+                  new LengthLimitingTextInputFormatter(11),
+                  PhoneInputFormatter()
+                  //                 BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
+                ],
+                onSaved: (value) {
+                  _phone = _countrycode + CardUtils.getCleanedNumber(value);
+                },
+              ),
+            ),
+            SizedBox(width: 30),
           ],
-
-          onSaved: (value) => _phone = value.trim(),
         ),
       );
     }
 
     Widget showPasswordInput() {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 0.0),
+        padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 0.0),
         child: new TextFormField(
           controller: _pass,
           maxLines: 1,
@@ -338,11 +370,11 @@ class _SignupPageState extends State<SignupPage> {
 //          ),
           ),
 //        validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
-//        validator: validatePassword,
-          validator: (val) {
-            if (val.isEmpty) return 'Empty';
-            return null;
-          },
+          validator: validatePassword,
+//          validator: (val) {
+//            if (val.isEmpty) return 'Empty';
+//            return null;
+//          },
           inputFormatters: [
             BlacklistingTextInputFormatter(new RegExp(r"\s\b|\b\s"))
           ],
@@ -353,7 +385,7 @@ class _SignupPageState extends State<SignupPage> {
 
     Widget showConfirmationPasswordInput() {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 0.0),
+        padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 0.0),
         child: new TextFormField(
           controller: _confirmPass,
           maxLines: 1,
