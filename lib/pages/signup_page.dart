@@ -7,7 +7,9 @@ import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/country_service.dart';
 import 'package:flutter_app_paul_test/services/input_formatters.dart';
 import 'package:flutter_app_paul_test/services/payment_card.dart';
+import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_app_paul_test/custom_flutter_widgets/circularwidget.dart';
 
 class SignupPage extends StatefulWidget {
 //  SignupPage({this.auth, this.loginCallback});
@@ -25,7 +27,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _confirmPass = TextEditingController();
 
   String _errorMessage = "";
-  bool _isLoading = false;
+
   String _countrycode = '';
   String _name = '';
   String _email = '';
@@ -41,6 +43,8 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
+    final providerVariables _globalvariables =
+        Provider.of<providerVariables>(context, listen: true);
 
     // Check if form is valid before perform login or signup
     bool validateAndSave() {
@@ -63,9 +67,7 @@ class _SignupPageState extends State<SignupPage> {
       if (validateAndSave()) {
         String userId = "";
         User user;
-        setState(() {
-          _isLoading = true;
-        });
+        _globalvariables.setisLoading(true);
         try {
           userId = await auth.createUserWithEmailAndPassword(
               _email.trim(), _password.trim());
@@ -78,14 +80,12 @@ class _SignupPageState extends State<SignupPage> {
             val.updateProfile(updateUser);
           });
           print('Signed up user: $userId');
-          setState(() {
-            _isLoading = false;
-          });
+          _globalvariables.setisLoading(false);
           Navigator.pushNamed(context, '/accountcreated');
         } catch (e) {
           print('Error: $e');
+          _globalvariables.setisLoading(false);
           setState(() {
-            _isLoading = false;
             _errorMessage = e.message;
             //         _formKey.currentState.reset();
           });
@@ -141,16 +141,6 @@ class _SignupPageState extends State<SignupPage> {
 //  void toggleFormMode() {
 //    resetForm();
 //  }
-
-    Widget _showCircularProgress() {
-      if (_isLoading) {
-        return Center(child: CircularProgressIndicator());
-      }
-      return Container(
-        height: 0.0,
-        width: 0.0,
-      );
-    }
 
     Widget showLogo() {
       return new Hero(
@@ -529,7 +519,7 @@ class _SignupPageState extends State<SignupPage> {
         body: Stack(
       children: <Widget>[
         _showForm(context),
-        _showCircularProgress(),
+        showCircularProgress(_globalvariables.isLoading),
       ],
     ));
   }

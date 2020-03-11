@@ -3,9 +3,10 @@ class Charge_object {
   String amount;
   Metadata metadata;
   CardObject card;
-  String pin;
+//  String pin;
 
-  Charge_object({this.email, this.amount, this.metadata, this.card, this.pin});
+//  Charge_object({this.email, this.amount, this.metadata, this.card, this.pin});
+  Charge_object({this.email, this.amount, this.metadata, this.card});
 
   Charge_object.fromJson(Map<String, dynamic> json) {
     email = json['email'];
@@ -14,7 +15,7 @@ class Charge_object {
         ? new Metadata.fromJson(json['metadata'])
         : null;
     card = json['card'] != null ? new CardObject.fromJson(json['card']) : null;
-    pin = json['pin'];
+//    pin = json['pin'];
   }
 
   Map<String, dynamic> toJson() {
@@ -27,7 +28,7 @@ class Charge_object {
     if (this.card != null) {
       data['card'] = this.card.toJson();
     }
-    data['pin'] = this.pin;
+//    data['pin'] = this.pin;
     return data;
   }
 }

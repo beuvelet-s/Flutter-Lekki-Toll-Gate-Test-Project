@@ -1,21 +1,29 @@
+import 'dart:async';
 import 'dart:convert';
-
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_app_paul_test/custom_flutter_widgets/circularwidget.dart';
+import 'package:flutter_app_paul_test/custom_flutter_widgets/pin_entry_text_custom.dart';
+import 'package:flutter_app_paul_test/custom_flutter_widgets/showOtpFields.dart';
 import 'package:flutter_app_paul_test/models/chargeobjectmodel.dart';
-import 'package:flutter_app_paul_test/pages/account_created_page.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/input_formatters.dart';
 import 'package:flutter_app_paul_test/services/payment_card.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_app_paul_test/services/providervariables.dart';
+import 'package:flutter_app_paul_test/utils/const.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
 class PaymentPage extends StatefulWidget {
+//  final GlobalKey bottomNavigationKey;
+//  PaymentPage({Key key, this.bottomNavigationKey}) : super(key: key);
+
   @override
   State<StatefulWidget> createState() => new _PaymentPageState();
 }
@@ -26,13 +34,32 @@ class _PaymentPageState extends State<PaymentPage> {
   var _paymentCard = PaymentCard();
   final TextEditingController _cardnumcontrol = TextEditingController();
   final TextEditingController _cardnumcontrolAmount = TextEditingController();
-
+  final FocusNode _sourceFocus = FocusNode();
+  final FocusNode _cardFocus = FocusNode();
+  final FocusNode _expiryFocus = FocusNode();
+  final FocusNode _cvvFocus = FocusNode();
+  final FocusNode _amountFocus = FocusNode();
+  final FocusNode _pinFocus = FocusNode();
+  final FocusNode _payFocus = FocusNode();
   final _formKeypay = new GlobalKey<FormState>();
+  final TextEditingController _pinController = TextEditingController();
+  final TextEditingController _expiryController = TextEditingController();
+  final TextEditingController _cvvController = TextEditingController();
+  final TextEditingController _confirmPass = TextEditingController();
   var _sourceofFund = 'Debit Card';
   FirebaseUser currentuser;
   String userId;
   bool _autoValidate = false;
 
+  String _reference = '';
+  List<bool> isSelected = [false, true, false];
+  List<int> isSelectedValue = [4, 6, 8];
+  FocusNode focusNodeButton1 = FocusNode();
+  FocusNode focusNodeButton2 = FocusNode();
+  FocusNode focusNodeButton3 = FocusNode();
+  List<FocusNode> focusToggle;
+  int _nbdigitOPT = 6;
+  bool _redrawotpfield = false;
   void _getCardTypeFrmNumber() {
     String input = CardUtils.getCleanedNumber(_cardnumcontrol.text);
     String cardType = CardUtils.getCardTypeFrmNumber(input);
@@ -59,45 +86,316 @@ class _PaymentPageState extends State<PaymentPage> {
     userId = currentuser.uid;
   }
 
-  Future<String> PaywithPaystack(url, headerData, bodydata) async {
-    var bodyjson = json.encode(bodydata);
-    await http
-        .post(Uri.parse(url),
-            headers: headerData,
-            body: bodyjson,
-            encoding: Encoding.getByName("utf-8"))
-        .then((result) {
+  Future<Map> Checkpendingcharge(String reference) async {
+    final Map<String, String> _headerData = {
+      "Content-Type": "application/json",
+      'Authorization': Authorization
+    };
+    final String _url = 'https://api.paystack.co/charge/$reference';
+    String _message = '';
+    String _success = '';
+    Map _result = {};
+    await http.get(Uri.parse(_url), headers: _headerData).then((result) {
       if (result.statusCode == 200) {
-        return (result.body);
-      } else {
-        return result.statusCode;
+        var _jsonbody = json.decode(result.body);
+        bool status = _jsonbody['status'];
+        _success = _jsonbody['data']['status'];
+        if (status == true && _success == "success") {
+          _result = {
+            'success': true,
+            'response': _jsonbody,
+            'message': 'Payment successfull'
+          };
+        } else {
+          print('Checkpendingcharge returns : false');
+          _message = _jsonbody['message'];
+          _result = {
+            'success': false,
+            'responsebody': _jsonbody,
+            'message': _message
+          };
+        }
       }
-    }).catchError((e) => print('Error $e'));
+    }).catchError((e) {
+      print("Error in Checkpendingcharge : $e");
+    });
+    return _result;
   }
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _pass = TextEditingController();
-    final TextEditingController _confirmPass = TextEditingController();
     final Firestore db = Provider.of<Firestore>(context, listen: false);
-
     String _cardtypeselected;
-
-//    String _cardnumber = '';
-//    String _expiryDate = '';
-//    String _cvv = '';
     String _amount = '';
-//    String _PIN = '';
+    double _Screenwidth = MediaQuery.of(context).size.width;
+    double _Screenheight = MediaQuery.of(context).size.height;
+    final providerVariables _globalvariables =
+        Provider.of<providerVariables>(context, listen: false);
+    String _otp = '';
+    focusToggle = [focusNodeButton1, focusNodeButton2, focusNodeButton3];
+    Future<dynamic> ManagePaystackResponse(jsonbody) async {
+      String _message = '';
+      String _displaytext = '';
+      String _url = '';
+      String _ussdcode = '';
 
-    Future<String> Charge() async {
+      var _result;
+      bool status = jsonbody['status'];
+      if (status == true) {
+        switch (jsonbody['data']['status']) {
+          case "pending":
+            {
+              print('pending');
+              _message = 'pending';
+              _reference = jsonbody['data']['reference'];
+              Timer(Duration(seconds: 10), () async {
+                print("Yeah, this line is printed after 10 seconds");
+                _result = await Checkpendingcharge(_reference);
+              });
+              // action to take: call Check pending charge at least 10 seconds
+              // after getting this status
+            }
+            break;
+          case "send_pin":
+            {
+//              action to take:
+//              show data.display_text to user with input for PIN
+//              call Submit PIN with reference and PIN
+              _reference = jsonbody['data']['reference'];
+              _globalvariables.setpinrequired(true);
+            }
+            break;
+          case "send_phone":
+            {
+//              action to take:
+//              show data.display_text to user with input for Phone
+//              call Submit Phone with reference and phone
+              _reference = jsonbody['data']['reference'];
+              _message = jsonbody['data']['status'];
+              _displaytext = jsonbody['data']['display_text'];
+            }
+            break;
+          case "send_birthday":
+            {
+//              action to take:
+//              show data.display_text to user with input for Birthday
+//              call Submit Birthday with reference and birthday
+              _reference = jsonbody['data']['reference'];
+              _message = jsonbody['data']['status'];
+              _displaytext = jsonbody['data']['display_text'];
+            }
+            break;
+          case "send_otp":
+            {
+              // action to take:
+              //show data.display_text to user with input for OTP
+              //call Submit OTP with reference and otp
+              _reference = jsonbody['data']['reference'];
+              _message = jsonbody['data']['status'];
+              _displaytext = jsonbody['data']['display_text'];
+              _globalvariables.setotprequired(true);
+            }
+            break;
+          case "open_url":
+            {
+              _url = jsonbody['data']['url'];
+            }
+//action to take: open data.url in user’s browser.
+//You can specify an optional url to which we should redirect the user after
+// the attempt is complete by adding redirect_to=[url] as a GET query parameter.
+// call Check pending charge at least 5 seconds after user closes browser page or after
+// 5 minutes, whichever comes first.
+            break;
+          case "pay_offline":
+            {
+              _ussdcode = jsonbody['data']['ussd_code'];
+// action to take: promt data.ussd_code as a phone string to user
+// User needs to dial the provided USSD code to complete the transaction offline
+            }
+            break;
+          case "failed":
+            {
+              _message = jsonbody['data']['message'];
+              if (jsonbody['data']['message'] == "Incorrect PIN") {
+                _reference = jsonbody['data']['reference'];
+                _globalvariables.setpinrequired(true);
+              }
+            }
+            break;
+          case "false":
+            {
+              print('debug your logic');
+              _message = 'debug your logic';
+// action to take: no remedy, start a new charge after showing data.message to user
+            }
+            break;
+          case "timeout":
+            {
+              print('timeout');
+              _message = 'timeout';
+// action to take: no remedy, you may start a new charge after showing data.message to user
+            }
+            break;
+        }
+      }
+      return _result;
+    }
+
+    Future<Map> sendPIN(String reference) async {
+      final Map<String, String> _headerData = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        'Authorization': Authorization
+      };
+      final Map<String, String> _bodyData = {
+        "pin": _paymentCard.pin,
+        'reference': reference
+      };
+      final String _url = 'https://api.paystack.co/charge/submit_pin';
+      String _message = '';
+      String _success = '';
+      Map _result = {};
+      await http
+          .post(Uri.parse(_url),
+              headers: _headerData,
+              body: _bodyData,
+              encoding: Encoding.getByName("utf-8"))
+          .then((result) {
+        if (result.statusCode == 200 || result.statusCode == 400) {
+          var _jsonbody = json.decode(result.body);
+          bool status = _jsonbody['status'];
+          _success = _jsonbody['data']['status'];
+          if (status == true && _success == "success") {
+            _result = {
+              'success': true,
+              'response': _jsonbody,
+              'message': 'Payment successfull'
+            };
+          } else {
+            if (status == true && _success != "success") {
+              print('sendPIN returns : ${_jsonbody['data']['status']}');
+              _message = _jsonbody['data']['status'];
+              _result = {
+                'success': false,
+                'responsebody': _jsonbody,
+                'message': _message
+              };
+              ManagePaystackResponse(_jsonbody);
+            } else {
+              print('sendPIN returns : false');
+              _message = _jsonbody['data']['message'];
+              _result = {
+                'success': false,
+                'responsebody': _jsonbody,
+                'message': _message
+              };
+            }
+          }
+          ;
+        }
+        ;
+      }).catchError((e) {
+        print("Error in sendPIN : $e");
+        setState(() {
+          _errorMessage = e;
+        });
+      });
+      return _result;
+    }
+
+    Future<Map> sendOTP(otp, reference) async {
+      final Map<String, String> _headerData = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        'Authorization': Authorization
+      };
+      // This will trigger UI to rebuild with PIN input TextField
+
+      final Map<String, String> _bodyData = {
+        "otp": otp,
+        'reference': reference
+      };
+      final String _url = 'https://api.paystack.co/charge/submit_otp';
+      String _message = '';
+      String _success = '';
+      Map _result = {};
+      await http
+          .post(Uri.parse(_url),
+              headers: _headerData,
+              body: _bodyData,
+              encoding: Encoding.getByName("utf-8"))
+          .then((result) {
+        if (result.statusCode == 200) {
+          var _jsonbody = json.decode(result.body);
+          bool status = _jsonbody['status'];
+          _success = _jsonbody['data']['status'];
+          if (status == true && _success == "success") {
+            _result = {
+              'success': true,
+              'response': _jsonbody,
+              'message': 'Payment successfull'
+            };
+          } else {
+            if (status == true && _success != "success") {
+              print('sendOTP returns : ${_jsonbody['data']['status']}');
+              _message = _jsonbody['data']['status'];
+              _result = {
+                'success': false,
+                'responsebody': _jsonbody,
+                'message': _message
+              };
+              ManagePaystackResponse(_jsonbody);
+            } else {
+              print('sendOTP returns : false');
+              _message = _jsonbody['data']['message'];
+              _result = {
+                'success': false,
+                'responsebody': _jsonbody,
+                'message': _message
+              };
+            }
+          }
+          ;
+        }
+        ;
+      }).catchError((e) {
+//      setState(() {
+//        _errorMessage = e;
+//      });
+        print("Error in sendOTP : $e");
+      });
+      return _result;
+    }
+
+    Future<dynamic> PaywithPaystack(url, headerData, bodydata) async {
+      var bodyjson = json.encode(bodydata);
+      var _result;
+      await http
+          .post(Uri.parse(url),
+              headers: headerData,
+              body: bodyjson,
+              encoding: Encoding.getByName("utf-8"))
+          .then((result) async {
+        if (result.statusCode == 200) {
+          var jsonbody = json.decode(result.body);
+          await ManagePaystackResponse(jsonbody).then((result) {
+            _result = result;
+          });
+        } else {}
+      }).catchError((e) {
+        setState(() {
+          _errorMessage = e;
+        });
+        print('Error $e');
+      });
+      return _result;
+    }
+
+    Future<dynamic> Charge() async {
 //Payment Charge using http POST request
       final String url = 'https://api.paystack.co/charge';
       String _tollid = '';
       String _email = '';
       String _name = '';
 //      String p = 'Bearer $vAuthToken';
-      String Authorization =
-          'Bearer sk_test_fd4de30832bc5641ba1ef6467f93cdc3e6d68b9b';
 
       final Map<String, String> headerData = {
         "Content-Type": "application/json",
@@ -107,11 +405,12 @@ class _PaymentPageState extends State<PaymentPage> {
           .collection("users")
           .where('userid', isEqualTo: userId)
           .getDocuments()
-          .then((result) {
+          .then((result) async {
         _email = result.documents[0].data['email'];
         _tollid = result.documents[0].data['tollid'];
         _name = result.documents[0].data['name'];
 
+        //Construct the Charge Object to be sent to paystack
         CustomFields customfields1 = CustomFields();
         customfields1.value = _tollid;
         customfields1.displayName = 'tollID';
@@ -140,13 +439,28 @@ class _PaymentPageState extends State<PaymentPage> {
         bodydata.amount = _amount;
         bodydata.card = card1;
         bodydata.metadata = metadata1;
-        bodydata.pin = _paymentCard.pin;
-        var resultpaystack =
-            PaywithPaystack(url, headerData, bodydata.toJson());
-        return resultpaystack;
+        // bodydata.pin = _paymentCard.pin;
+        await PaywithPaystack(url, headerData, bodydata.toJson())
+            .then((resultpaystack) {
+          return resultpaystack;
+        }).catchError((e) {
+          setState(() {
+            _errorMessage = e;
+          });
+          print('Error in Charge object : $e');
+        });
       }).catchError((e) {
+        setState(() {
+          _errorMessage = e;
+        });
         print('Error in Charge object : $e');
       });
+    }
+
+    _fieldFocusChange(
+        BuildContext context, FocusNode currentFocus, FocusNode nextFocus) {
+      currentFocus.unfocus();
+      FocusScope.of(context).requestFocus(nextFocus);
     }
 
     // Check if form is valid before perform Payment
@@ -159,7 +473,6 @@ class _PaymentPageState extends State<PaymentPage> {
         setState(() {
           _autoValidate = true;
         });
-
         return false;
       }
     }
@@ -170,20 +483,14 @@ class _PaymentPageState extends State<PaymentPage> {
       bool _validated = false;
       if (FormvalidatedPay()) {
         String userId;
-        _isLoading = true;
         try {
-//          userId = await auth.signInWithEmailAndPassword(_email, _password);
           print('Form Valid!');
-          _isLoading = false;
           _validated = true;
         } catch (e) {
           print('Error: $e');
-          _isLoading = false;
           setState(() {
             _errorMessage = e.message;
           });
-
-//        _formKey.currentState.reset();
         }
       }
       return _validated;
@@ -238,25 +545,6 @@ class _PaymentPageState extends State<PaymentPage> {
       }
     }
 
-//  void resetForm() {
-//    _formKeypay.currentState.reset();
-//    _errorMessage = "";
-//  }
-//
-//  void toggleFormMode() {
-//    resetForm();
-//  }
-
-    Widget _showCircularProgress() {
-      if (_isLoading) {
-        return Center(child: CircularProgressIndicator());
-      }
-      return Container(
-        height: 0.0,
-        width: 0.0,
-      );
-    }
-
     Widget showExplanation() {
       return Padding(
         padding: EdgeInsets.fromLTRB(34.0, 10.0, 0.0, 0.0),
@@ -267,7 +555,6 @@ class _PaymentPageState extends State<PaymentPage> {
                     color: Colors.black,
                     fontWeight: FontWeight.bold))),
       );
-      //  onPressed: () {});
     }
 
     Widget showFundingSourceInput() {
@@ -280,11 +567,8 @@ class _PaymentPageState extends State<PaymentPage> {
                 Text('Select Funding Source', style: TextStyle(fontSize: 18)),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(50.0, 1.0, 50.0, 0.0),
+            padding: const EdgeInsets.fromLTRB(50.0, 0, 50.0, 0.0),
             child: DropdownButtonFormField<String>(
-//              maxLines: 1,
-//              keyboardType: TextInputType.text,
-//              autofocus: false,
               value: _sourceofFund,
               items: [
                 DropdownMenuItem(
@@ -292,9 +576,6 @@ class _PaymentPageState extends State<PaymentPage> {
                 DropdownMenuItem(
                     value: "Bank Account", child: Text("Bank Account"))
               ],
-//              CardType.map((String type) {
-//                return DropdownMenuItem<String>(value: type, child: Text(type));
-//              }).toList(),
               onChanged: (String newValue) {
                 print("value : $newValue");
                 setState(() {
@@ -302,11 +583,12 @@ class _PaymentPageState extends State<PaymentPage> {
                 });
               },
               decoration: new InputDecoration(
+                isDense: true,
                 filled: true,
                 fillColor: Color(0xFFE8E8E8),
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                labelText: 'Debit Card',
+                labelText: 'Funding Source',
                 alignLabelWithHint: false,
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Colors.grey, width: 1.0),
@@ -321,17 +603,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.grey),
-//            icon: new Icon(
-//              Icons.mail,
-//              color: Colors.grey,
-//            ),
               ),
-//        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
-//              validator: validateFundingSource,
-//        inputFormatters: [
-//          BlacklistingTextInputFormatter(new RegExp(r"\s\b|\b\s"))
-//        ],
-//              onSaved: (value) => _sourceofFund = value.trim(),
             ),
           ),
         ],
@@ -351,7 +623,12 @@ class _PaymentPageState extends State<PaymentPage> {
             child: new TextFormField(
               maxLines: 1,
               keyboardType: TextInputType.number,
-              autofocus: false,
+              textInputAction: TextInputAction.next,
+              focusNode: _cardFocus,
+              onFieldSubmitted: (term) {
+                _fieldFocusChange(context, _cardFocus, _expiryFocus);
+              },
+              autofocus: true,
               decoration: new InputDecoration(
                 filled: true,
                 fillColor: Color(0xFFE8E8E8),
@@ -374,32 +651,19 @@ class _PaymentPageState extends State<PaymentPage> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.grey),
-//            icon: new Icon(
-//              Icons.mail,
-//              color: Colors.grey,
-//            ),
               ),
               controller: _cardnumcontrol,
               validator: CardUtils.validateCardNum,
-//              validator: validateCardNumber,
-//              inputFormatters: [
-//                BlacklistingTextInputFormatter(new RegExp(r"\s\b|\b\s"))
-//              ],
               inputFormatters: [
                 WhitelistingTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(19),
                 CardNumberInputFormatter(),
-//                MaskTextInputFormatter(
-//                    mask: '####-####-####-####',
-//                    filter: {"#": RegExp(r'[0-9]')})
               ],
               onSaved: (String value) {
                 print('onSaved = $value');
                 print('Num controller has = ${_cardnumcontrol.text}');
                 _paymentCard.number = CardUtils.getCleanedNumber(value);
               },
-
-//              onSaved: (value) => _cardnumber = value.trim(),
             ),
           ),
         ],
@@ -411,9 +675,15 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(50.0, 15.0, 10.0, 0.0),
           child: new TextFormField(
+            controller: _expiryController,
             maxLines: 1,
-            keyboardType: TextInputType.number,
-            autofocus: false,
+            keyboardType: TextInputType.datetime,
+            textInputAction: TextInputAction.next,
+            focusNode: _expiryFocus,
+            onFieldSubmitted: (term) {
+              _fieldFocusChange(context, _expiryFocus, _cvvFocus);
+            },
+            autofocus: true,
             decoration: new InputDecoration(
               filled: true,
               fillColor: Color(0xFFE8E8E8),
@@ -437,23 +707,16 @@ class _PaymentPageState extends State<PaymentPage> {
                   color: Colors.grey),
             ),
             validator: CardUtils.validateDate,
-//            validator: validateExpiryDate,
-//            inputFormatters: [
-//              BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
-//            ],
             inputFormatters: [
               WhitelistingTextInputFormatter.digitsOnly,
               new LengthLimitingTextInputFormatter(4),
               new CardMonthInputFormatter()
-//              MaskTextInputFormatter(
-//                  mask: '##/##', filter: {"#": RegExp(r"^\d{2}\/\d{2}$")})
             ],
             onSaved: (value) {
               List<String> expiryDate = CardUtils.getExpiryDate(value);
               _paymentCard.month = expiryDate[0];
               _paymentCard.year = expiryDate[1];
             },
-//            onSaved: (value) => _expiryDate = value.trim(),
           ),
         ),
       );
@@ -464,50 +727,43 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(10.0, 15.0, 50.0, 0.0),
           child: new TextFormField(
+            controller: _cvvController,
             maxLines: 1,
             keyboardType: TextInputType.number,
-            autofocus: false,
+            textInputAction: TextInputAction.next,
+            focusNode: _cvvFocus,
+            onFieldSubmitted: (term) {
+              _fieldFocusChange(context, _cvvFocus, _amountFocus);
+            },
+            autofocus: true,
             decoration: new InputDecoration(
-              filled: true,
-              fillColor: Color(0xFFE8E8E8),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-              labelText: 'CVV',
-              alignLabelWithHint: false,
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide:
-                    const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              labelStyle: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey),
-//            icon: new Icon(
-//              Icons.mail,
-//              color: Colors.grey,
-//            ),
-            ),
-//        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
-//            validator: validateCVV,
+                filled: true,
+                fillColor: Color(0xFFE8E8E8),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                labelText: 'CVV',
+                alignLabelWithHint: false,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide:
+                      const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                labelStyle: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey)),
             validator: CardUtils.validateCVV,
-//            inputFormatters: [
-//              BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
-//            ],
             inputFormatters: [
               WhitelistingTextInputFormatter.digitsOnly,
               new LengthLimitingTextInputFormatter(3),
-//              MaskTextInputFormatter(
-//                  mask: '###', filter: {"#": RegExp(r'[0-9]')})
             ],
             onSaved: (value) {
               _paymentCard.cvv = value;
             },
-//            onSaved: (value) => _cvv = value.trim(),
           ),
         ),
       );
@@ -519,7 +775,12 @@ class _PaymentPageState extends State<PaymentPage> {
         child: new TextFormField(
           maxLines: 1,
           keyboardType: TextInputType.number,
-          autofocus: false,
+          textInputAction: TextInputAction.next,
+          focusNode: _amountFocus,
+          onFieldSubmitted: (term) {
+            _fieldFocusChange(context, _amountFocus, _pinFocus);
+          },
+          autofocus: true,
           decoration: new InputDecoration(
             filled: true,
             fillColor: Color(0xFFE8E8E8),
@@ -539,89 +800,74 @@ class _PaymentPageState extends State<PaymentPage> {
             ),
             labelStyle: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-//            icon: new Icon(
-//              Icons.mail,
-//              color: Colors.grey,
-//            ),
           ),
-//        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
           controller: _cardnumcontrolAmount,
-//          validator: validateAmount,
           validator: CardUtils.validateAmount,
           inputFormatters: [
             WhitelistingTextInputFormatter.digitsOnly,
             new LengthLimitingTextInputFormatter(8),
             CurrencyPtBrInputFormatter()
           ],
-//          inputFormatters: [
-//            BlacklistingTextInputFormatter(new RegExp(r"\s  \b|\b\s"))
-//          ],
           onSaved: (value) {
             _amount = CardUtils.getCleanedNumber(value);
           },
-//          onSaved: (value) {
-//            _amount = Paymvalue;
-//          },
-////          onSaved: (value) => _amount = value,
         ),
       );
     }
 
-    Widget showPINInput() {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(50.0, 20.0, 50.0, 0.0),
-        child: new TextFormField(
-          controller: _pass,
-          maxLines: 1,
-          obscureText: true,
-          autofocus: false,
-          decoration: new InputDecoration(
-            filled: true,
-            fillColor: Color(0xFFE8E8E8),
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-            labelText: 'Enter PIN',
-            alignLabelWithHint: false,
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide:
-                  const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            labelStyle: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-//          icon: new Icon(
-//            Icons.lock,
-//            color: Colors.grey,
+//    Widget showPINInput() {
+//      return Padding(
+//        padding: const EdgeInsets.fromLTRB(50.0, 20.0, 50.0, 0.0),
+//        child: new TextFormField(
+//          controller: _pinController,
+//          maxLines: 1,
+//          keyboardType: TextInputType.number,
+//          textInputAction: TextInputAction.done,
+//          focusNode: _pinFocus,
+//          onFieldSubmitted: (value) {
+//            _pinFocus.unfocus();
+//          },
+//          autofocus: true,
+//          obscureText: true,
+//          decoration: new InputDecoration(
+//            filled: true,
+//            fillColor: Color(0xFFE8E8E8),
+//            contentPadding:
+//                EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+//            labelText: 'Enter PIN',
+//            alignLabelWithHint: false,
+//            enabledBorder: OutlineInputBorder(
+//              borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+//              borderRadius: BorderRadius.circular(8.0),
+//            ),
+//            focusedBorder: OutlineInputBorder(
+//              borderSide:
+//                  const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+//              borderRadius: BorderRadius.circular(8.0),
+//            ),
+//            labelStyle: TextStyle(
+//                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
 //          ),
-          ),
-//        validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
-//        validator: validatePIN,
-          validator: validatePIN,
+//          validator: validatePIN,
 //          inputFormatters: [
-//            BlacklistingTextInputFormatter(new RegExp(r"\s\b|\b\s"))
+//            MaskTextInputFormatter(
+//                mask: '####', filter: {"#": RegExp(r'[0-9]')})
 //          ],
-          inputFormatters: [
-            MaskTextInputFormatter(
-                mask: '####', filter: {"#": RegExp(r'[0-9]')})
-          ],
-//          onSaved: (value) => _PIN = value.trim(),
-          onSaved: (value) {
-            _paymentCard.pin = value;
-          },
-        ),
-      );
-    }
+////          onSaved: (value) => _PIN = value.trim(),
+//          onSaved: (value) {
+//            _paymentCard.pin = value;
+//          },
+//        ),
+//      );
+//    }
 
     Widget showPAYButton() {
       return new Padding(
           padding: EdgeInsets.fromLTRB(100.0, 20.0, 100.0, 5.0),
           child: SizedBox(
-            height: 66.0,
+            height: 56.0,
             child: RaisedButton(
+              focusNode: _payFocus,
               elevation: 5.0,
               shape: new RoundedRectangleBorder(
                 borderRadius: new BorderRadius.circular(33.0),
@@ -633,12 +879,18 @@ class _PaymentPageState extends State<PaymentPage> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold)),
               onPressed: () async {
-//                FocusScope.of(context).unfocus();
                 if (await validateAndSubmitPay() == true) {
-                  var result = await Charge();
-                  print('result Paystack = $result');
+//                  _globalvariables.setisLoading(true);
+                  var _result = await Charge();
+                  if (_result['success'] == false) {
+                    // This will trigger UI to rebuild with PIN input TextField
+                    print('PAyment has failed');
+                  }
+                  print('result Paystack = $_result');
+                  // TODO increase Fund wallet
                   Navigator.pushNamed(context, '/home');
                 }
+                _globalvariables.setisLoading(false);
               },
             ),
           ));
@@ -663,41 +915,200 @@ class _PaymentPageState extends State<PaymentPage> {
     }
 
     Widget _showForm(BuildContext context) {
-      return new Container(
-          child: new Form(
-        key: _formKeypay,
-        autovalidate: _autoValidate,
-        child: new ListView(
-          shrinkWrap: true,
-          children: <Widget>[
-            SizedBox(height: 20),
-            showExplanation(),
-            SizedBox(height: 25),
-            showFundingSourceInput(),
-            showCardNumberInput(),
-            Row(children: [showExpiryDateInput(), showCVVInput()]),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-              child: Container(height: 6.0, color: Color(0xFFDCDCDC)),
-            ),
-            showAmountInput(),
-            showPINInput(),
-            showPAYButton(),
-            showErrorMessage(),
-          ],
-        ),
-      ));
+      return Stack(children: <Widget>[
+        Container(
+            child: new Form(
+          key: _formKeypay,
+          autovalidate: _autoValidate,
+          child: new ListView(
+            shrinkWrap: true,
+            children: <Widget>[
+              SizedBox(height: 15),
+              showExplanation(),
+              SizedBox(height: 20),
+              showFundingSourceInput(),
+              showCardNumberInput(),
+              Row(children: [showExpiryDateInput(), showCVVInput()]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+                child: Container(height: 6.0, color: Color(0xFFDCDCDC)),
+              ),
+              showAmountInput(),
+//              showPINInput(),
+              showPAYButton(),
+              showErrorMessage(),
+            ],
+          ),
+        )),
+        _globalvariables.pinisrequired == true
+            ? BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                    width: _Screenwidth,
+                    height: _Screenheight,
+                    color: Colors.black.withOpacity(0),
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text(
+                                  'Enter PIN:',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                SizedBox(height: 5),
+                                PinEntryTextFieldCustom(
+                                  isTextObscure: true,
+                                  showFieldAsBox: true,
+                                  onSubmit: (String pin) async {
+                                    _paymentCard.pin = pin;
+                                    var _result = await sendPIN(_reference);
+                                    if (_result['success'] == false ||
+                                        _result['success'] == null) {
+                                      setState(() {
+                                        _errorMessage = _result['message'];
+                                      });
+                                      print(
+                                          'PAyment has failed : $_errorMessage');
+                                      _globalvariables.setpinrequired(false);
+                                      ManagePaystackResponse(
+                                          _result['responsebody']);
+                                    } else {
+                                      print('result Paystack = $_result');
+                                      _globalvariables.setpinrequired(false);
+                                      // TODO increase Fund wallet
+                                      Navigator.pushReplacementNamed(
+                                          context, '/home');
+                                    }
+                                  }, // end onSubmit
+                                ),
+                                SizedBox(height: 20),
+                                Center(
+                                  child: Text(
+                                    _errorMessage,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontSize: 16.0,
+                                        color: Colors.red,
+                                        height: 1.0,
+                                        fontWeight: FontWeight.w300),
+                                  ),
+                                )
+                              ],
+                            ), // end Padding()
+                          ),
+                        ])))
+            : Container(),
+        _globalvariables.otpisrequired == true
+            ? BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  width: _Screenwidth,
+                  height: _Screenheight,
+                  color: Colors.black.withOpacity(0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      ToggleButtons(
+                        color: Colors.greenAccent,
+                        selectedColor: Colors.amberAccent,
+                        fillColor: Colors.white70,
+                        splashColor: MAIN_COLOR,
+                        highlightColor: MAIN_COLOR,
+                        borderColor: Colors.black12,
+                        borderWidth: 3,
+                        selectedBorderColor: MAIN_COLOR,
+                        renderBorder: true,
+//                                  borderRadius: BorderRadius.only(
+//                                      topLeft: Radius.circular(25),
+//                                      bottomRight: Radius.circular(25)),disabledColor: Colors.blueGrey,
+                        disabledBorderColor: Colors.blueGrey,
+                        focusColor: Colors.red,
+                        focusNodes: focusToggle,
+                        children: <Widget>[
+                          Text('4',
+                              style:
+                                  TextStyle(fontSize: 24, color: Colors.black)),
+                          Text('6',
+                              style:
+                                  TextStyle(fontSize: 24, color: Colors.black)),
+                          Text('8',
+                              style:
+                                  TextStyle(fontSize: 24, color: Colors.black))
+                        ],
+                        isSelected: isSelected,
+                        onPressed: (int index) {
+//                          setState(() {
+                          for (int indexBtn = 0;
+                              indexBtn < isSelected.length;
+                              indexBtn++) {
+                            if (indexBtn == index) {
+                              isSelected[indexBtn] = true;
+                            } else {
+                              isSelected[indexBtn] = false;
+                            }
+                          }
+//                          });
+                          print('Isselected = $index');
+                          print(' value = ${isSelectedValue[index]}');
+                          _nbdigitOPT = isSelectedValue[index];
+                          setState(() {
+                            _redrawotpfield = !_redrawotpfield;
+                          });
+                          _globalvariables.setOTPDigitnum(_nbdigitOPT);
+//                          _globalvariables.setotprequired(false);
+//                          _globalvariables.setotprequired(true);
+                          //                         _globalvariables.setotprequired(true);
+//                          _globalvariables.setotprequired(false);
+                        },
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'Enter OTP:',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      SizedBox(height: 5),
+                      PinEntryTextFieldCustom(
+                        fields: _globalvariables.OTPDigitnum,
+                        isTextObscure: true,
+                        showFieldAsBox: false,
+                        onSubmit: (String otp) async {
+                          var _otp = otp;
+                          var _result = await sendOTP(_otp, _reference);
+                          if (_result['success'] == false ||
+                              _result['success'] == null) {
+                            print('PAyment has failed due to $_result');
+                            _globalvariables.errorMessage = _result['message'];
+                            // TODO Display message
+                          }
+//        _globalVariables.setotprequired(false);
+                          print('result Paystack = $_result');
+                          // TODO increase Fund wallet
+//                          Navigator.pushReplacementNamed(context, '/home');
+                        }, // end onSubmit
+                      )
+                    ],
+                  ), // end Padding()
+                ),
+              )
+            : Container(), // end Container()
+      ]);
     }
 
     return new Scaffold(
-//        appBar: new AppBar(
-//          title: new Text('Flutter login demo'),
-//        ),
-        body: Stack(
-      children: <Widget>[
-        _showForm(context),
-        _showCircularProgress(),
-      ],
+        body: GestureDetector(
+      onTap: () {
+        // call this method here to hide soft keyboard
+        FocusScope.of(context).requestFocus(new FocusNode());
+      },
+      child: Stack(
+        children: <Widget>[
+          _showForm(context),
+          showCircularProgress(_globalvariables.isLoading),
+        ],
+      ),
     ));
   }
 }

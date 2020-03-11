@@ -18,7 +18,7 @@ environment:
 
 dependencies:
 
-  cloud_firestore:
+  cloud_firestore: ^0.13.4+1
   ff_navigation_bar: ^0.1.4
   intl: ^0.16.1
   provider: ^4.0.4
@@ -27,7 +27,7 @@ dependencies:
   http: ^0.12.0+4
   flushbar: ^1.9.1
   country_code_picker: ^1.2.4
-
+  qrscan: ^0.2.17
 
 
   flutter:
@@ -71,6 +71,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  fonts:
+   - family:  MyFlutterApp
+     fonts:
+      - asset: assets/fonts/MyFlutterApp.ttf
   # fonts:
   #   - family: Schyler
   #     fonts:

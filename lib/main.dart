@@ -5,9 +5,12 @@ import 'package:flutter_app_paul_test/pages/forgotpassword_page.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 import 'package:flutter_app_paul_test/pages/login_page.dart';
 import 'package:flutter_app_paul_test/pages/payment_page.dart';
+import 'package:flutter_app_paul_test/pages/root_page.dart';
 import 'package:flutter_app_paul_test/pages/signup_page.dart';
 import 'package:flutter_app_paul_test/pages/splashscreen_page.dart';
+import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
+import 'package:flutter_app_paul_test/utils/const.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -30,6 +33,9 @@ class MyApp extends StatelessWidget {
           Provider<Firestore>(create: (_) => Firestore.instance
 //            dispose: (_, AuthService authService) => authService.dispose(),
               ),
+          ChangeNotifierProvider<providerVariables>(
+            create: (_) => providerVariables(),
+          )
         ],
         child: MaterialApp(
           title: 'LCC Lekki App',
@@ -38,6 +44,7 @@ class MyApp extends StatelessWidget {
           routes: {
             // When navigating to the "/" route, build the FirstScreen widget.
             '/': (context) => SplashScreen(),
+            '/root': (context) => RootPage(),
             // When navigating to the "/second" route, build the SecondScreen widget.
             '/login': (context) => LoginPage(),
             '/accountcreated': (context) => AccountCreatedPage(),
@@ -47,7 +54,16 @@ class MyApp extends StatelessWidget {
             '/forgotpassword': (context) => ForgotPasswordPage(),
           },
           theme: new ThemeData(
-              primarySwatch: Colors.blue, accentColor: Color(0xFFD97A00)),
+//              appBarTheme: AppBarTheme(
+//                  elevation: 0, // This removes the shadow from all App Bars.
+//                  backgroundColor: Colors.transparent,
+//                  bottomOpacity: 0.0),
+            primarySwatch: Colors.blue,
+            accentColor: MAIN_COLOR,
+//            inputDecorationTheme: InputDecorationTheme(
+//              labelStyle: TextStyle(color: MAIN_COLOR, fontSize: 24.0),
+//            ),
+          ),
 //        home: SplashScreen()
         ));
   }

@@ -2,27 +2,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ff_navigation_bar/ff_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app_paul_test/pages/login_page.dart';
+import 'package:flutter_app_paul_test/pages/dashboard_page.dart';
+import 'package:flutter_app_paul_test/pages/payment_page.dart';
+import 'package:flutter_app_paul_test/pages/qrcodescanning_page.dart';
+import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
-//import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter_app_paul_test/models/todo.dart';
 import 'package:flutter_app_paul_test/services/flushbar_service.dart';
 import 'dart:async';
-
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_app_paul_test/services/flushbar_service.dart';
+
+import '../my_flutter_app_icons.dart';
 
 class HomePage extends StatefulWidget {
-//  HomePage({Key key, this.currentuser, this.userId}) : super(key: key);
-//
-//  final FirebaseUser currentuser;
+//  int selectedIndex;
+//  HomePage(this.selectedIndex);
 
-//      {Key key, this.auth, this.userId, this.logoutCallback, this.currentuser})
-//      : super(key: key);
-//  final BaseAuth auth;
-//  final VoidCallback logoutCallback;
-//  final String userId;
-//  final FirebaseUser currentuser;
+//  setindex(int newindex) {
+//    this.selectedIndex = newindex;
+//  }
 
   @override
   State<StatefulWidget> createState() => new _HomePageState();
@@ -32,7 +30,10 @@ class _HomePageState extends State<HomePage> {
   FirebaseUser currentuser;
   String userId;
   String user_name;
+//  static GlobalKey _bottomNavigationKey =
+//      new GlobalKey(debugLabel: 'btm_app_bar');
 
+//  int _selectedIndex = 0;
   @override
   void initState() {
     super.initState();
@@ -52,14 +53,20 @@ class _HomePageState extends State<HomePage> {
         duration: 3);
   }
 
-  int selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final Firestore db = Provider.of<Firestore>(context, listen: false);
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
-//    final AuthService current =
-//        Provider.of<CurrentUser>(context, listen: false);
+    final providerVariables _indexbottomAppBar =
+        Provider.of<providerVariables>(context, listen: true);
+
+    final List<Widget> _Pages = [
+      DashboardPage(),
+//  MessagePage();
+      PaymentPage(),
+      QRCodePage(),
+//  UserPAge(),
+    ];
 
     void signOut() async {
       try {
@@ -71,7 +78,37 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          bottomOpacity: 0.0,
+          elevation: 0.0,
+          centerTitle: true,
+          title: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+            child: Container(
+                height: 65,
+                width: 65,
+                child: Image.asset('assets/logoLCCLekki.png')),
+          ),
+          leading: Container(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(Icons.sort, size: 40, color: Color(0xFFD97A00)),
+            ),
+          ),
+//        expandedHeight: 400,
+//        floating: true,
+//        pinned: true,
+//        snap: true,
+          actions: <Widget>[
+            FlatButton(
+                hoverColor: Color(0xFFD97A00),
+                child: new Text('Logout',
+                    style: new TextStyle(fontSize: 17.0, color: Colors.black)),
+                onPressed: signOut)
+          ]),
       bottomNavigationBar: FFNavigationBar(
+//        key: _bottomNavigationKey,
         theme: FFNavigationBarTheme(
           barBackgroundColor: Colors.white,
           selectedItemBackgroundColor: Color(0xFFEBD8BF),
@@ -79,27 +116,31 @@ class _HomePageState extends State<HomePage> {
           selectedItemLabelColor: Colors.black,
           selectedItemBorderColor: Color(0xFFEBD8BF),
         ),
-        selectedIndex: selectedIndex,
+        selectedIndex: _indexbottomAppBar.selecteditem,
         onSelectTab: (index) {
-          print('index = $index');
           setState(() {
-            selectedIndex = index;
-            if (selectedIndex == 1) {
-              print("tab 1");
-            }
+            _indexbottomAppBar.selecteditem = index;
           });
         },
+//            (index) {
+//          setState(() {
+//            _selectedIndex = index;
+//          })
         items: [
           FFNavigationBarItem(
             iconData: Icons.home,
             label: 'Home',
           ),
           FFNavigationBarItem(
-            iconData: Icons.message,
-            label: 'Message',
+            iconData: Icons.credit_card,
+            label: 'Fund',
           ),
           FFNavigationBarItem(
-            iconData: Icons.settings,
+            iconData: MyCustomIcon.qrcode,
+            label: 'PAY',
+          ),
+          FFNavigationBarItem(
+            iconData: Icons.message,
             label: 'Settings',
           ),
           FFNavigationBarItem(
@@ -108,370 +149,18 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Stack(
-        children: <Widget>[
-          WillPopScope(
-            // ignore: missing_return
-            onWillPop: () async {
-              Future.value(false);
-            },
-            child: SafeArea(
-              child: Material(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverAppBar(
-                        centerTitle: true,
-                        title: Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-                          child: Container(
-                              height: 65,
-                              width: 65,
-                              child: Image.asset('assets/logoLCCLekki.png')),
-                        ),
-                        leading: Container(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.sort,
-                                size: 40, color: Color(0xFFD97A00)),
-                          ),
-                        ),
-                        expandedHeight: 400,
-                        floating: true,
-                        pinned: true,
-                        snap: true,
-                        elevation: 50,
-                        backgroundColor: Colors.white,
-                        actions: <Widget>[
-                          FlatButton(
-                              hoverColor: Color(0xFFD97A00),
-                              child: new Text('Logout',
-                                  style: new TextStyle(
-                                      fontSize: 17.0, color: Colors.black)),
-                              onPressed: signOut)
-                        ],
-                        flexibleSpace: StreamBuilder(
-                            stream: db
-                                .collection('users')
-                                .where('userid', isEqualTo: userId)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) return Text("Loading...");
-                              return FlexibleSpaceBar(
-                                background: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      SizedBox(height: 60),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            12.0, 20, 0, 0),
-                                        child: Text(
-                                            // Find Name in Firebase Auth current user Object
-                                            'Hello ${snapshot.data.documents[0].data['name']}',
-                                            textAlign: TextAlign.left,
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.black54,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            12.0, 0, 0, 0),
-                                        child: Text('Good morning.',
-                                            textAlign: TextAlign.left,
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.black45,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
-                                      SizedBox(height: 30),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            12.0, 0, 12, 0),
-                                        child: Container(
-                                          height: 100,
-                                          color: Color(0xFFEBD8BF),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: <Widget>[
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: <Widget>[
-                                                  Padding(
-                                                    padding: const EdgeInsets
-                                                            .fromLTRB(
-                                                        12.0, 8, 0, 0),
-                                                    child: Text(
-                                                        'Toll ID: ${snapshot.data.documents[0].data['tollid']}',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color:
-                                                                Colors.black45,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets
-                                                            .fromLTRB(
-                                                        12.0, 8, 0, 0),
-                                                    child: Text(
-                                                        'Your Wallet balance',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color:
-                                                                Colors.black45,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets
-                                                            .fromLTRB(
-                                                        12.0, 8, 0, 0),
-                                                    child: Text(
-                                                        'N${NumberFormat("#,###.#").format(snapshot.data.documents[0].data['balance']).toString()}',
-                                                        textAlign:
-                                                            TextAlign.left,
-                                                        style: TextStyle(
-                                                            fontSize: 23,
-                                                            color:
-                                                                Colors.black87,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: <Widget>[
-                                                  Padding(
-                                                    padding: const EdgeInsets
-                                                        .fromLTRB(0, 8, 30, 0),
-                                                    child: Text('',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color:
-                                                                Colors.black45,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets
-                                                        .fromLTRB(0, 8, 30, 0),
-                                                    child: Text(
-                                                        'Number of vehicles: ${snapshot.data.documents[0].data['nbofvehicles'].toString()}',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color:
-                                                                Colors.black45,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets
-                                                        .fromLTRB(0, 0, 30, 0),
-                                                    child: RaisedButton(
-                                                      color: Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              new BorderRadius
-                                                                      .circular(
-                                                                  12.0)),
-                                                      onPressed: () {
-                                                        Navigator.pushNamed(
-                                                            context, '/pay');
-                                                      },
-                                                      child: Text('Fund Wallet',
-                                                          textAlign:
-                                                              TextAlign.left,
-                                                          style: TextStyle(
-                                                              fontSize: 16,
-                                                              color: Colors
-                                                                  .black87,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                  ),
-                                                ],
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 20),
-                                      Container(
-                                          height: 6.0,
-                                          color: Color(0xFFEBD8BF)),
-                                      SizedBox(height: 20),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: <Widget>[
-                                          Container(
-                                              height: 100,
-                                              width: 100,
-                                              color: Color(0xFFEBD8BF),
-                                              child: Image.asset(
-                                                  'assets/addremovevehicle.PNG')),
-                                          Container(
-                                              height: 100,
-                                              width: 100,
-                                              color: Color(0xFFEBD8BF),
-                                              child: Image.asset(
-                                                  'assets/requesttolldevice.PNG')),
-                                          Container(
-                                              height: 100,
-                                              width: 100,
-                                              color: Color(0xFFEBD8BF),
-                                              child: Image.asset(
-                                                  'assets/viewpassage.PNG')),
-                                        ],
-                                      )
-                                    ]),
-                              );
-                            })
-//                    MySliverAppBar(),
-                        ),
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Container(height: 6.0, color: Color(0xFFDCDCDC)),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 10, 0, 10),
-                            child: Text(
-                              'My Vehicles',
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    StreamBuilder(
-                        stream: db.collection('vehicles').snapshots(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<QuerySnapshot> snapshot) {
-                          if (snapshot.hasData) {
-                            return SliverList(
-                              delegate: new SliverChildListDelegate(
-                                snapshot.data.documents
-                                    .map((DocumentSnapshot document) {
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(24, 0, 0, 10),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(document['type'] +
-                                            ' - ' +
-                                            document['immatriculation']),
-                                        Text(document['category'] +
-                                            ': ' +
-                                            document['costperpassage']
-                                                .toString() +
-                                            '/passage'),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          } else if (snapshot.hasError) {
-                            return SliverToBoxAdapter(
-                                child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(0, 5, 0, 5),
-                                    child: Text('Error: ${snapshot.error}')));
-                          } else
-                            return SliverToBoxAdapter(
-                                child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(0, 5, 0, 5),
-                                    child: Text('Loading....')));
-                        }),
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Container(height: 6.0, color: Color(0xFFDCDCDC)),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 10, 0, 10),
-                            child: Text(
-                              'My Recent Passages',
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    StreamBuilder(
-                        stream: db.collection('passages').snapshots(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<QuerySnapshot> snapshot) {
-                          if (snapshot.hasError)
-                            return SliverToBoxAdapter(
-                                child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(0, 5, 0, 5),
-                                    child: Text('Error: ${snapshot.error}')));
-                          switch (snapshot.connectionState) {
-                            case ConnectionState.waiting:
-                              return SliverToBoxAdapter(
-                                  child: Padding(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(0, 5, 0, 5),
-                                      child: Text('Loading....')));
-                            default:
-                              return SliverList(
-                                delegate: new SliverChildListDelegate(
-                                  snapshot.data.documents
-                                      .map((DocumentSnapshot document) {
-                                    return Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          24, 0, 0, 10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text(document['type'] +
-                                              ' - ' +
-                                              document['immatriculation'] +
-                                              ' - ' +
-                                              DateFormat('dd/MM/yy h:mma')
-                                                  .format(
-                                                      document['date'].toDate())
-                                                  .toString()),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              );
-                          }
-                        }),
-                  ],
-                ),
-              ),
-            ),
+      body: Stack(children: <Widget>[
+        _Pages[_indexbottomAppBar.selecteditem],
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            height: 5.0,
+            color: Color(0xFFEBD8BF),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              height: 5.0,
-              color: Color(0xFFEBD8BF),
-            ),
-          )
-        ],
-      ),
+        )
+      ]),
     );
   }
 }

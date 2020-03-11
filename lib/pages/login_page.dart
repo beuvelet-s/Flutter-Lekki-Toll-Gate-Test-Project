@@ -289,7 +289,7 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.bold)),
               onPressed: () async {
                 if (await validateAndSubmit() == true) {
-                  Navigator.pushNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/home');
                 }
               },
             ),
