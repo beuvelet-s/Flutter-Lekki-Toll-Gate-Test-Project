@@ -8,6 +8,8 @@ import 'package:flutter_app_paul_test/pages/qrcodescanning_page.dart';
 import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/flushbar_service.dart';
+import 'package:liquid_swipe/Constants/Helpers.dart';
+import 'package:liquid_swipe/liquid_swipe.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:flutter_app_paul_test/services/flushbar_service.dart';
@@ -21,6 +23,7 @@ class HomePage extends StatefulWidget {
 //  setindex(int newindex) {
 //    this.selectedIndex = newindex;
 //  }
+//  var keyLiquid = new GlobalKey<LiquidSwipeState>();
 
   @override
   State<StatefulWidget> createState() => new _HomePageState();
@@ -30,9 +33,7 @@ class _HomePageState extends State<HomePage> {
   FirebaseUser currentuser;
   String userId;
   String user_name;
-//  static GlobalKey _bottomNavigationKey =
-//      new GlobalKey(debugLabel: 'btm_app_bar');
-
+  GlobalKey bottomNavigationKey = GlobalKey();
 //  int _selectedIndex = 0;
   @override
   void initState() {
@@ -57,16 +58,40 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final Firestore db = Provider.of<Firestore>(context, listen: false);
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
-    final providerVariables _indexbottomAppBar =
+    final providerVariables _globalVariables =
         Provider.of<providerVariables>(context, listen: true);
 
-    final List<Widget> _Pages = [
-      DashboardPage(),
-//  MessagePage();
-      PaymentPage(),
-      QRCodePage(),
-//  UserPAge(),
-    ];
+//    PageController pageController = PageController(
+//      initialPage: _globalVariables.selecteditem,
+//      keepPage: true,
+//    );
+
+    Widget buildPageView() {
+      return PageView(
+        key: bottomNavigationKey,
+        controller: _globalVariables.pageController,
+        onPageChanged: (index) {
+          //         pageChanged(index);
+          _globalVariables.setselecteditem(index);
+        },
+        children: <Widget>[
+          DashboardPage(bottomNavigationKey: bottomNavigationKey),
+          PaymentPage(),
+          QRCodePage(),
+        ],
+        pageSnapping: true,
+        physics: BouncingScrollPhysics(),
+      );
+    }
+
+//
+//    final List<Container> _Pages = [
+//      Container(child: DashboardPage()),
+////  MessagePage();
+//      Container(child: PaymentPage()),
+//      Container(child: QRCodePage()),
+////  UserPAge(),
+//    ];
 
     void signOut() async {
       try {
@@ -108,7 +133,6 @@ class _HomePageState extends State<HomePage> {
                 onPressed: signOut)
           ]),
       bottomNavigationBar: FFNavigationBar(
-//        key: _bottomNavigationKey,
         theme: FFNavigationBarTheme(
           barBackgroundColor: Colors.white,
           selectedItemBackgroundColor: Color(0xFFEBD8BF),
@@ -116,11 +140,20 @@ class _HomePageState extends State<HomePage> {
           selectedItemLabelColor: Colors.black,
           selectedItemBorderColor: Color(0xFFEBD8BF),
         ),
-        selectedIndex: _indexbottomAppBar.selecteditem,
+        selectedIndex: _globalVariables.selecteditem,
         onSelectTab: (index) {
-          setState(() {
-            _indexbottomAppBar.selecteditem = index;
-          });
+//          setState(() {
+          _globalVariables.setselecteditem(index);
+          _globalVariables.pageController.animateToPage(
+            index,
+            duration: Duration(milliseconds: 400),
+            curve: Curves.fastOutSlowIn,
+          );
+//          // modify liquid_swipe object internal properties
+//          widget.keyLiquid.currentState.nextPageIndex = index;
+//          widget.keyLiquid.currentState.slidePercentHor = 1;
+//            _Pages[index];
+//          });
         },
 //            (index) {
 //          setState(() {
@@ -150,7 +183,33 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Stack(children: <Widget>[
-        _Pages[_indexbottomAppBar.selecteditem],
+        buildPageView(),
+//        _Pages[_globalVariables.selecteditem],
+//        LiquidSwipe(
+//          key: widget.keyLiquid,
+//          pages: _Pages,
+////          initialPage: _globalVariables.selecteditem,
+//          fullTransitionValue: 300,
+//          enableLoop: true,
+//          enableSlideIcon: true,
+//          waveType: WaveType.circularReveal,
+//          currentUpdateTypeCallback: (item) {
+//            print('item = $item');
+//            print(
+//                'globalVariables.selecteditem ici = ${_globalVariables.selecteditem}');
+//            if (item != _globalVariables.selecteditem) {
+//              print('item = $item');
+//            }
+//          },
+//          onPageChangeCallback: (pagenum) {
+////            setState(() {
+//            _globalVariables.setselecteditem(pagenum);
+//            print('pagenum = $pagenum');
+//
+////              _globalVariables.selecteditem = pagenum;
+////            });
+//          },
+//        ),
         Positioned(
           left: 0,
           right: 0,

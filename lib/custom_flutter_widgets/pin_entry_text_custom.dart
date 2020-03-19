@@ -60,7 +60,6 @@ class PinEntryTextFieldState extends State<PinEntryTextFieldCustom> {
     final providerVariables _globalVariables =
         Provider.of<providerVariables>(context, listen: false);
     super.didUpdateWidget(oldWidget);
-    print('didupdate');
     if (widget.fields != oldWidget.fields) {
       oldWidget.fields = _globalVariables.OTPDigitnum;
 //    widget.fields = _globalVariables.OTPDigitnum;

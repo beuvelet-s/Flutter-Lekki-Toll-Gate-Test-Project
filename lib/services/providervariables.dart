@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 class providerVariables with ChangeNotifier {
   int selecteditem = 0;
@@ -6,8 +7,42 @@ class providerVariables with ChangeNotifier {
   bool otpisrequired = false;
   bool phoneisrequired = false;
   bool isLoading = false;
+  bool successfulltransaction = false;
   String errorMessage = '';
   int OTPDigitnum = 6;
+  double fees = 0;
+  double amountpaid = 0;
+  String transactionid = '';
+
+  PageController pageController = PageController(
+    initialPage: 0,
+    keepPage: true,
+  );
+
+  void settransactionid(String newvalue) {
+    transactionid = newvalue;
+    notifyListeners();
+  }
+
+  void setfees(double newvalue) {
+    fees = newvalue;
+    notifyListeners();
+  }
+
+  void setamountpaid(double newvalue) {
+    amountpaid = newvalue;
+    notifyListeners();
+  }
+
+  void setsuccessfulltransaction(bool newvalue) {
+    successfulltransaction = newvalue;
+    notifyListeners();
+  }
+
+  void setselecteditem(int newvalue) {
+    selecteditem = newvalue;
+    notifyListeners();
+  }
 
   void setOTPDigitnum(int newvalue) {
     OTPDigitnum = newvalue;

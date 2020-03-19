@@ -17,8 +17,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 
 class DashboardPage extends StatefulWidget {
-//  final GlobalKey bottomNavigationKey;
-//  DashboardPage({Key key, this.bottomNavigationKey}) : super(key: key);
+  final GlobalKey bottomNavigationKey;
+  DashboardPage({Key key, this.bottomNavigationKey}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => new _DashboardState();
@@ -49,7 +49,7 @@ class _DashboardState extends State<DashboardPage> {
     final Firestore db = Provider.of<Firestore>(context, listen: false);
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
     final providerVariables _providerVariables =
-        Provider.of<providerVariables>(context, listen: false);
+        Provider.of<providerVariables>(context, listen: true);
     void signOut() async {
       try {
         await auth.signOut();
@@ -191,7 +191,7 @@ class _DashboardState extends State<DashboardPage> {
                                                               .fromLTRB(
                                                           12.0, 8, 0, 0),
                                                       child: Text(
-                                                          '\u20A6 ${NumberFormat("#,###.#").format(snapshot.data.documents[0].data['balance']).toString()}',
+                                                          '\u20A6 ${NumberFormat("###,###.##").format(snapshot.data.documents[0].data['balance']).toString()}',
                                                           textAlign:
                                                               TextAlign.left,
                                                           style: TextStyle(
@@ -248,8 +248,21 @@ class _DashboardState extends State<DashboardPage> {
                                                                     12.0)),
                                                         onPressed: () {
                                                           _providerVariables
-                                                              .ChangebottomAppBarindexto(
+                                                              .setselecteditem(
                                                                   1);
+                                                          _providerVariables
+                                                              .pageController
+                                                              .animateToPage(
+                                                            1,
+                                                            duration: Duration(
+                                                                milliseconds:
+                                                                    400),
+                                                            curve: Curves
+                                                                .fastOutSlowIn,
+                                                          );
+//                                                          _providerVariables
+//                                                              .ChangebottomAppBarindexto(
+//                                                                  1);
 //                                                        Navigator.pushNamed(
 //                                                            context, '/home');
                                                         },

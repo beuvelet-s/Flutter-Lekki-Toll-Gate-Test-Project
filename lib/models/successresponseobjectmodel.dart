@@ -28,21 +28,21 @@ class Data {
   String status;
   String reference;
   int amount;
-  Null message;
+  String message;
   String gatewayResponse;
   String paidAt;
   String createdAt;
   String channel;
   String currency;
   String ipAddress;
-  Metadata metadata;
-  Null log;
+  Metadata2 metadata;
+  String log;
   int fees;
-  Null feesSplit;
-  Authorization authorization;
+  String feesSplit;
+  Authorization2 authorization;
   Customer customer;
-  Null plan;
-  Null orderId;
+  String plan;
+  String orderId;
   String paidAt2;
   String createdAt2;
   int requestedAmount;
@@ -92,13 +92,13 @@ class Data {
     currency = json['currency'];
     ipAddress = json['ip_address'];
     metadata = json['metadata'] != null
-        ? new Metadata.fromJson(json['metadata'])
+        ? new Metadata2.fromJson(json['metadata'])
         : null;
     log = json['log'];
     fees = json['fees'];
     feesSplit = json['fees_split'];
     authorization = json['authorization'] != null
-        ? new Authorization.fromJson(json['authorization'])
+        ? new Authorization2.fromJson(json['authorization'])
         : null;
     customer = json['customer'] != null
         ? new Customer.fromJson(json['customer'])
@@ -159,16 +159,16 @@ class Data {
   }
 }
 
-class Metadata {
-  List<CustomFields> customFields;
+class Metadata2 {
+  List<CustomFields2> customFields;
 
-  Metadata({this.customFields});
+  Metadata2({this.customFields});
 
-  Metadata.fromJson(Map<String, dynamic> json) {
+  Metadata2.fromJson(Map<String, dynamic> json) {
     if (json['custom_fields'] != null) {
-      customFields = new List<CustomFields>();
+      customFields = new List<CustomFields2>();
       json['custom_fields'].forEach((v) {
-        customFields.add(new CustomFields.fromJson(v));
+        customFields.add(new CustomFields2.fromJson(v));
       });
     }
   }
@@ -182,14 +182,14 @@ class Metadata {
   }
 }
 
-class CustomFields {
+class CustomFields2 {
   String value;
   String displayName;
   String variableName;
 
-  CustomFields({this.value, this.displayName, this.variableName});
+  CustomFields2({this.value, this.displayName, this.variableName});
 
-  CustomFields.fromJson(Map<String, dynamic> json) {
+  CustomFields2.fromJson(Map<String, dynamic> json) {
     value = json['value'];
     displayName = json['display_name'];
     variableName = json['variable_name'];
@@ -204,7 +204,7 @@ class CustomFields {
   }
 }
 
-class Authorization {
+class Authorization2 {
   String authorizationCode;
   String bin;
   String last4;
@@ -217,11 +217,11 @@ class Authorization {
   String brand;
   bool reusable;
   String signature;
-  Null accountName;
-  Null receiverBankAccountNumber;
-  Null receiverBank;
+  String accountName;
+  String receiverBankAccountNumber;
+  String receiverBank;
 
-  Authorization(
+  Authorization2(
       {this.authorizationCode,
       this.bin,
       this.last4,
@@ -238,7 +238,7 @@ class Authorization {
       this.receiverBankAccountNumber,
       this.receiverBank});
 
-  Authorization.fromJson(Map<String, dynamic> json) {
+  Authorization2.fromJson(Map<String, dynamic> json) {
     authorizationCode = json['authorization_code'];
     bin = json['bin'];
     last4 = json['last4'];
@@ -279,12 +279,12 @@ class Authorization {
 
 class Customer {
   int id;
-  Null firstName;
-  Null lastName;
+  String firstName;
+  String lastName;
   String email;
   String customerCode;
-  Null phone;
-  Null metadata;
+  String phone;
+  String metadata;
   String riskAction;
 
   Customer(

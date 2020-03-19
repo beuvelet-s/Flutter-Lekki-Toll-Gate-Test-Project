@@ -11,6 +11,7 @@ import 'package:flutter_app_paul_test/custom_flutter_widgets/circularwidget.dart
 import 'package:flutter_app_paul_test/custom_flutter_widgets/pin_entry_text_custom.dart';
 import 'package:flutter_app_paul_test/custom_flutter_widgets/showOtpFields.dart';
 import 'package:flutter_app_paul_test/models/chargeobjectmodel.dart';
+import 'package:flutter_app_paul_test/models/successresponseobjectmodel.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/input_formatters.dart';
 import 'package:flutter_app_paul_test/services/payment_card.dart';
@@ -50,7 +51,6 @@ class _PaymentPageState extends State<PaymentPage> {
   FirebaseUser currentuser;
   String userId;
   bool _autoValidate = false;
-
   String _reference = '';
   List<bool> isSelected = [false, true, false];
   List<int> isSelectedValue = [4, 6, 8];
@@ -127,6 +127,10 @@ class _PaymentPageState extends State<PaymentPage> {
     final Firestore db = Provider.of<Firestore>(context, listen: false);
     String _cardtypeselected;
     String _amount = '';
+    String transactionid = '';
+    int fees = 0;
+    int amountpaid = 0;
+    int _balance;
     double _Screenwidth = MediaQuery.of(context).size.width;
     double _Screenheight = MediaQuery.of(context).size.height;
     final providerVariables _globalvariables =
@@ -139,6 +143,7 @@ class _PaymentPageState extends State<PaymentPage> {
       String _url = '';
       String _ussdcode = '';
 
+      _globalvariables.setisLoading(false);
       var _result;
       bool status = jsonbody['status'];
       if (status == true) {
@@ -163,6 +168,28 @@ class _PaymentPageState extends State<PaymentPage> {
 //              call Submit PIN with reference and PIN
               _reference = jsonbody['data']['reference'];
               _globalvariables.setpinrequired(true);
+            }
+            break;
+          case "success":
+            {
+//              action to take:
+//              show data transaction an possibility to copy details in database
+//              credit funds into wallet
+              _result = successresponse.fromJson(jsonbody);
+              _globalvariables.setpinrequired(false);
+              print('${_result.data.amount}');
+              var ref = db.collection("transactions");
+              await ref.add({
+                "userid": userId,
+                "transaction_data": _result.toJson()
+              }).then((docref) {
+                print(
+                    "transaction added with transaction ID = ${docref.documentID}");
+                _globalvariables.setsuccessfulltransaction(true);
+                _globalvariables.settransactionid(docref.documentID);
+                _globalvariables.setfees(_result.data.fees / 100);
+                _globalvariables.setamountpaid(_result.data.amount / 100);
+              }).catchError((err) => print('Error: $err'));
             }
             break;
           case "send_phone":
@@ -1060,7 +1087,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           _globalvariables.setOTPDigitnum(_nbdigitOPT);
 //                          _globalvariables.setotprequired(false);
 //                          _globalvariables.setotprequired(true);
-                          //                         _globalvariables.setotprequired(true);
+//                         _globalvariables.setotprequired(true);
 //                          _globalvariables.setotprequired(false);
                         },
                       ),
@@ -1091,6 +1118,106 @@ class _PaymentPageState extends State<PaymentPage> {
                       )
                     ],
                   ), // end Padding()
+                ),
+              )
+            : Container(),
+        _globalvariables.successfulltransaction == true
+            ? Container(
+                color: Colors.white,
+                child: Center(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Text(
+                          '\nTransaction Successfull\n\n Ref: ${_globalvariables.transactionid}',
+                          maxLines: 4,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 20.0,
+                              color: Colors.black,
+                              height: 1.0,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        Icon(
+                          Icons.check_circle,
+                          color: Color(0xFFD97A00),
+                          size: 140,
+                        ),
+                        Text(
+                          "The Amount of ${_globalvariables.amountpaid - _globalvariables.fees} has been added to your Wallet - Fees = ${_globalvariables.fees}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 20.0,
+                              color: Colors.black,
+                              height: 1.0,
+                              fontWeight: FontWeight.bold),
+                        ),
+//                        Padding(
+//                          padding: const EdgeInsets.all(8.0),
+//                          child: Text(
+//                            "If you want to check detailled of this transaction please click Here",
+//                            textAlign: TextAlign.center,
+//                            style: TextStyle(
+//                                fontSize: 20.0,
+//                                color: Colors.black,
+//                                height: 1.0,
+//                                fontWeight: FontWeight.bold),
+//                          ),
+//                        ),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(00.0, 40.0, 00.0, 5.0),
+                          child: SizedBox(
+                            height: 66.0,
+                            width: 190,
+                            child: RaisedButton(
+                              elevation: 5.0,
+                              shape: new RoundedRectangleBorder(
+                                borderRadius: new BorderRadius.circular(33.0),
+                              ),
+                              color: Color(0xFFD97A00),
+                              disabledColor: Colors.grey,
+                              child: new Text('OK',
+                                  style: new TextStyle(
+                                      fontSize: 23.0,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              onPressed: () {
+                                _globalvariables
+                                    .setsuccessfulltransaction(false);
+                                // increase balance;
+                                db
+                                    .collection('users')
+                                    .where('userid', isEqualTo: userId)
+                                    .getDocuments()
+                                    .then((querySnapshot) {
+                                  querySnapshot.documents
+                                      .forEach((documentSnapshot) {
+                                    documentSnapshot.reference.updateData({
+                                      "balance": FieldValue.increment(
+                                          _globalvariables.amountpaid -
+                                              _globalvariables.fees)
+                                    });
+                                  });
+                                  _errorMessage = "Payment Successfull";
+                                }).catchError((e) {
+                                  print("update user balamce in users: $e");
+                                  _errorMessage = e;
+                                });
+//                                var userRef = await db
+//                                    .collection('users')
+//                                    .where('userid', isEqualTo: userId)
+//                                    .snapshots()
+//                                    .first
+//                                    .updateData((doc) {});
+//                                print('Snapshot = $userRef');
+                                // Atomically increment the balance by the amount charged - Fees.
+//                                userRef.map((doc) {doc.data.documents[0].data['name']({"balance": FieldValue.increment(XX)});
+                              },
+                            ),
+                          ),
+                        ),
+                      ]),
                 ),
               )
             : Container(), // end Container()
