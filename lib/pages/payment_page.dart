@@ -124,7 +124,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Firestore db = Provider.of<Firestore>(context, listen: false);
     String _cardtypeselected;
     String _amount = '';
     String transactionid = '';
@@ -135,6 +134,7 @@ class _PaymentPageState extends State<PaymentPage> {
     double _Screenheight = MediaQuery.of(context).size.height;
     final providerVariables _globalvariables =
         Provider.of<providerVariables>(context, listen: false);
+    final Firestore db = Provider.of<Firestore>(context, listen: false);
     String _otp = '';
     focusToggle = [focusNodeButton1, focusNodeButton2, focusNodeButton3];
     Future<dynamic> ManagePaystackResponse(jsonbody) async {
@@ -181,7 +181,8 @@ class _PaymentPageState extends State<PaymentPage> {
               var ref = db.collection("transactions");
               await ref.add({
                 "userid": userId,
-                "transaction_data": _result.toJson()
+                "transaction_data": _result.toJson(),
+                "transaction_type": 'funding'
               }).then((docref) {
                 print(
                     "transaction added with transaction ID = ${docref.documentID}");
@@ -915,7 +916,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   }
                   print('result Paystack = $_result');
                   // TODO increase Fund wallet
-                  Navigator.pushNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/home');
                 }
                 _globalvariables.setisLoading(false);
               },
@@ -1228,7 +1229,7 @@ class _PaymentPageState extends State<PaymentPage> {
         body: GestureDetector(
       onTap: () {
         // call this method here to hide soft keyboard
-        FocusScope.of(context).requestFocus(new FocusNode());
+        FocusScope.of(context).unfocus();
       },
       child: Stack(
         children: <Widget>[

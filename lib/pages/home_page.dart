@@ -45,8 +45,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> getThingsonStartUp() async {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
+    final providerVariables _globalvariables =
+        Provider.of<providerVariables>(context, listen: false);
     currentuser = await auth.getCurrentUser();
     userId = currentuser.uid;
+    _globalvariables.setuserId(userId);
     user_name = currentuser.displayName;
     normalflushbar(
         context: context,
@@ -75,7 +78,7 @@ class _HomePageState extends State<HomePage> {
           _globalVariables.setselecteditem(index);
         },
         children: <Widget>[
-          DashboardPage(bottomNavigationKey: bottomNavigationKey),
+          DashboardPage(),
           PaymentPage(),
           QRCodePage(),
         ],

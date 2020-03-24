@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_paul_test/pages/account_created_page.dart';
+import 'package:flutter_app_paul_test/pages/addvehicle_page.dart';
 import 'package:flutter_app_paul_test/pages/forgotpassword_page.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 import 'package:flutter_app_paul_test/pages/login_page.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_app_paul_test/pages/payment_page.dart';
 import 'package:flutter_app_paul_test/pages/root_page.dart';
 import 'package:flutter_app_paul_test/pages/signup_page.dart';
 import 'package:flutter_app_paul_test/pages/splashscreen_page.dart';
+import 'package:flutter_app_paul_test/services/picture_scanner.dart';
 import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/utils/const.dart';
@@ -52,6 +54,8 @@ class MyApp extends StatelessWidget {
             '/pay': (context) => PaymentPage(),
             '/signup': (context) => SignupPage(),
             '/forgotpassword': (context) => ForgotPasswordPage(),
+            '/addvehicle': (context) => AddVehicle(),
+            '/PictureScanner': (context) => PictureScanner()
           },
           theme: new ThemeData(
 //              appBarTheme: AppBarTheme(

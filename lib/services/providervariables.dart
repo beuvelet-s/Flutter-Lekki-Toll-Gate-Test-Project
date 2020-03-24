@@ -8,16 +8,38 @@ class providerVariables with ChangeNotifier {
   bool phoneisrequired = false;
   bool isLoading = false;
   bool successfulltransaction = false;
+  bool successfullpassagepayment = false;
   String errorMessage = '';
   int OTPDigitnum = 6;
+  int passagefee = 200;
   double fees = 0;
   double amountpaid = 0;
   String transactionid = '';
+  String keydecryptQR = '';
+  String barcodedecrypted = '...';
+  String userId;
+  String immatriculation = "AGL707DZ";
+  String vehicle_type = "PRADO";
 
   PageController pageController = PageController(
-    initialPage: 0,
+//    initialPage: selecteditem,
     keepPage: true,
   );
+
+  void setuserId(String newvalue) {
+    userId = newvalue;
+    notifyListeners();
+  }
+
+  void setbarcodedecrypted(String newvalue) {
+    barcodedecrypted = newvalue;
+    notifyListeners();
+  }
+
+  void setkeydecryptQR(String newvalue) {
+    keydecryptQR = newvalue;
+    notifyListeners();
+  }
 
   void settransactionid(String newvalue) {
     transactionid = newvalue;
@@ -36,6 +58,11 @@ class providerVariables with ChangeNotifier {
 
   void setsuccessfulltransaction(bool newvalue) {
     successfulltransaction = newvalue;
+    notifyListeners();
+  }
+
+  void setsuccessfullpassagepayment(bool newvalue) {
+    successfullpassagepayment = newvalue;
     notifyListeners();
   }
 

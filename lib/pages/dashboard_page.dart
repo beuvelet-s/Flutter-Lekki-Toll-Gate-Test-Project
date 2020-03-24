@@ -16,9 +16,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 
+import 'addvehicle_page.dart';
+
 class DashboardPage extends StatefulWidget {
-  final GlobalKey bottomNavigationKey;
-  DashboardPage({Key key, this.bottomNavigationKey}) : super(key: key);
+//  final GlobalKey bottomNavigationKey;
+//  DashboardPage({Key key, this.bottomNavigationKey}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => new _DashboardState();
@@ -37,12 +39,7 @@ class _DashboardState extends State<DashboardPage> {
     });
   }
 
-  Future<void> getThingsonStartUp() async {
-    final AuthService auth = Provider.of<AuthService>(context, listen: false);
-    currentuser = await auth.getCurrentUser();
-    userId = currentuser.uid;
-    user_name = currentuser.displayName;
-  }
+  Future<void> getThingsonStartUp() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +47,13 @@ class _DashboardState extends State<DashboardPage> {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
     final providerVariables _providerVariables =
         Provider.of<providerVariables>(context, listen: true);
+    userId = _providerVariables.userId;
+//    auth.getCurrentUser().then((currentuser) {
+//      userId = currentuser.uid;
+//      print("userId = $userId");
+//      user_name = currentuser.displayName;
+//    });
+
     void signOut() async {
       try {
         await auth.signOut();
@@ -111,211 +115,232 @@ class _DashboardState extends State<DashboardPage> {
                                   .collection('users')
                                   .where('userid', isEqualTo: userId)
                                   .snapshots(),
-                              builder: (context, snapshot) {
-                                if (!snapshot.hasData)
-                                  return Text("Loading...");
-                                return FlexibleSpaceBar(
-                                  background: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                                if (snapshot.hasData) {
+                                  return FlexibleSpaceBar(
+                                    background: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
 //                                      SizedBox(height: 60),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              12.0, 10, 0, 0),
-                                          child: Text(
-                                              // Find Name in Firebase Auth current user Object
-                                              'Hello ${snapshot.data.documents[0].data['name']}',
-                                              textAlign: TextAlign.left,
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.black54,
-                                                  fontWeight: FontWeight.bold)),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              12.0, 0, 0, 0),
-                                          child: Text('Good morning.',
-                                              textAlign: TextAlign.left,
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.black45,
-                                                  fontWeight: FontWeight.bold)),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              12.0, 0, 12, 0),
-                                          child: Container(
-                                            height: 100,
-                                            color: Color(0xFFEBD8BF),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: <Widget>[
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                              .fromLTRB(
-                                                          12.0, 8, 0, 0),
-                                                      child: Text(
-                                                          'Toll ID: ${snapshot.data.documents[0].data['tollid']}',
-                                                          style: TextStyle(
-                                                              fontSize: 14,
-                                                              color: Colors
-                                                                  .black45,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                              .fromLTRB(
-                                                          12.0, 8, 0, 0),
-                                                      child: Text(
-                                                          'Your Wallet balance',
-                                                          style: TextStyle(
-                                                              fontSize: 14,
-                                                              color: Colors
-                                                                  .black45,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                              .fromLTRB(
-                                                          12.0, 8, 0, 0),
-                                                      child: Text(
-                                                          '\u20A6 ${NumberFormat("###,###.##").format(snapshot.data.documents[0].data['balance']).toString()}',
-                                                          textAlign:
-                                                              TextAlign.left,
-                                                          style: TextStyle(
-                                                              fontSize: 23,
-                                                              color: Colors
-                                                                  .black87,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                              .fromLTRB(
-                                                          0, 8, 30, 0),
-                                                      child: Text('',
-                                                          style: TextStyle(
-                                                              fontSize: 14,
-                                                              color: Colors
-                                                                  .black45,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                              .fromLTRB(
-                                                          0, 8, 30, 0),
-                                                      child: Text(
-                                                          'Number of vehicles: ${snapshot.data.documents[0].data['nbofvehicles'].toString()}',
-                                                          style: TextStyle(
-                                                              fontSize: 14,
-                                                              color: Colors
-                                                                  .black45,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    Padding(
-                                                      padding: const EdgeInsets
-                                                              .fromLTRB(
-                                                          0, 0, 30, 0),
-                                                      child: RaisedButton(
-                                                        color: Colors.white,
-                                                        shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                new BorderRadius
-                                                                        .circular(
-                                                                    12.0)),
-                                                        onPressed: () {
-                                                          _providerVariables
-                                                              .setselecteditem(
-                                                                  1);
-                                                          _providerVariables
-                                                              .pageController
-                                                              .animateToPage(
-                                                            1,
-                                                            duration: Duration(
-                                                                milliseconds:
-                                                                    400),
-                                                            curve: Curves
-                                                                .fastOutSlowIn,
-                                                          );
-//                                                          _providerVariables
-//                                                              .ChangebottomAppBarindexto(
-//                                                                  1);
-//                                                        Navigator.pushNamed(
-//                                                            context, '/home');
-                                                        },
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(
+                                                12.0, 10, 0, 0),
+                                            child: Text(
+                                                // Find Name in Firebase Auth current user Object
+                                                'Hello ${snapshot.data.documents[0].data['name']}',
+                                                textAlign: TextAlign.left,
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.black54,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(
+                                                12.0, 0, 0, 0),
+                                            child: Text('Good morning.',
+                                                textAlign: TextAlign.left,
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.black45,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(
+                                                12.0, 0, 12, 0),
+                                            child: Container(
+                                              height: 100,
+                                              color: Color(0xFFEBD8BF),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: <Widget>[
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: <Widget>[
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .fromLTRB(
+                                                                12.0, 8, 0, 0),
                                                         child: Text(
-                                                            'Fund Wallet',
+                                                            'Toll ID: ${snapshot.data.documents[0].data['tollid']}',
+                                                            style: TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .black45,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold)),
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .fromLTRB(
+                                                                12.0, 8, 0, 0),
+                                                        child: Text(
+                                                            'Your Wallet balance',
+                                                            style: TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .black45,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold)),
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .fromLTRB(
+                                                                12.0, 8, 0, 0),
+                                                        child: Text(
+                                                            '\u20A6 ${NumberFormat("###,###.##").format(snapshot.data.documents[0].data['balance']).toString()}',
                                                             textAlign:
                                                                 TextAlign.left,
                                                             style: TextStyle(
-                                                                fontSize: 16,
+                                                                fontSize: 23,
                                                                 color: Colors
                                                                     .black87,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold)),
                                                       ),
-                                                    ),
-                                                  ],
-                                                )
-                                              ],
+                                                    ],
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: <Widget>[
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .fromLTRB(
+                                                                0, 8, 30, 0),
+                                                        child: Text('',
+                                                            style: TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .black45,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold)),
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .fromLTRB(
+                                                                0, 8, 30, 0),
+                                                        child: Text(
+                                                            'Number of vehicles: ${snapshot.data.documents[0].data['nbofvehicles'].toString()}',
+                                                            style: TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .black45,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold)),
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .fromLTRB(
+                                                                0, 0, 30, 0),
+                                                        child: RaisedButton(
+                                                          color: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  new BorderRadius
+                                                                          .circular(
+                                                                      12.0)),
+                                                          onPressed: () {
+                                                            _providerVariables
+                                                                .setselecteditem(
+                                                                    1);
+                                                            _providerVariables
+                                                                .pageController
+                                                                .animateToPage(
+                                                              1,
+                                                              duration: Duration(
+                                                                  milliseconds:
+                                                                      400),
+                                                              curve: Curves
+                                                                  .fastOutSlowIn,
+                                                            );
+//                                                          _providerVariables
+//                                                              .ChangebottomAppBarindexto(
+//                                                                  1);
+//                                                        Navigator.pushNamed(
+//                                                            context, '/home');
+                                                          },
+                                                          child: Text(
+                                                              'Fund Wallet',
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .left,
+                                                              style: TextStyle(
+                                                                  fontSize: 16,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        SizedBox(height: 20),
-                                        Container(
-                                            height: 6.0,
-                                            color: Color(0xFFEBD8BF)),
-                                        SizedBox(height: 20),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: <Widget>[
-                                            Container(
-                                                height: 100,
-                                                width: 100,
-                                                color: Color(0xFFEBD8BF),
-                                                child: Image.asset(
-                                                    'assets/addremovevehicle.PNG')),
-                                            Container(
-                                                height: 100,
-                                                width: 100,
-                                                color: Color(0xFFEBD8BF),
-                                                child: Image.asset(
-                                                    'assets/requesttolldevice.PNG')),
-                                            Container(
-                                                height: 100,
-                                                width: 100,
-                                                color: Color(0xFFEBD8BF),
-                                                child: Image.asset(
-                                                    'assets/viewpassage.PNG')),
-                                          ],
-                                        )
-                                      ]),
-                                );
+                                          SizedBox(height: 20),
+                                          Container(
+                                              height: 6.0,
+                                              color: Color(0xFFEBD8BF)),
+                                          SizedBox(height: 20),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: <Widget>[
+                                              GestureDetector(
+                                                onTap: () {
+                                                  print('Tapped!');
+                                                  Navigator.pushNamed(
+                                                      context, '/addvehicle');
+                                                },
+                                                child: Container(
+                                                    height: 100,
+                                                    width: 100,
+                                                    color: Color(0xFFEBD8BF),
+                                                    child: Image.asset(
+                                                        'assets/addremovevehicle.PNG')),
+                                              ),
+                                              Container(
+                                                  height: 100,
+                                                  width: 100,
+                                                  color: Color(0xFFEBD8BF),
+                                                  child: Image.asset(
+                                                      'assets/requesttolldevice.PNG')),
+                                              Container(
+                                                  height: 100,
+                                                  width: 100,
+                                                  color: Color(0xFFEBD8BF),
+                                                  child: Image.asset(
+                                                      'assets/viewpassage.PNG')),
+                                            ],
+                                          )
+                                        ]),
+                                  );
+                                } else {
+                                  return Text("Loading...");
+                                }
                               })
 //                    MySliverAppBar(),
                           ),
@@ -334,7 +359,10 @@ class _DashboardState extends State<DashboardPage> {
                         ),
                       ),
                       StreamBuilder(
-                          stream: db.collection('vehicles').snapshots(),
+                          stream: db
+                              .collection('vehicles')
+                              .where('userid', isEqualTo: userId)
+                              .snapshots(),
                           builder: (BuildContext context,
                               AsyncSnapshot<QuerySnapshot> snapshot) {
                             if (snapshot.hasData) {
@@ -391,7 +419,11 @@ class _DashboardState extends State<DashboardPage> {
                         ),
                       ),
                       StreamBuilder(
-                          stream: db.collection('passages').snapshots(),
+                          stream: db
+                              .collection('passages')
+                              .where('userId', isEqualTo: userId)
+                              .orderBy('date', descending: true)
+                              .snapshots(),
                           builder: (BuildContext context,
                               AsyncSnapshot<QuerySnapshot> snapshot) {
                             if (snapshot.hasError)
