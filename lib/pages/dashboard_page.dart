@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ff_navigation_bar/ff_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 import 'package:flutter_app_paul_test/pages/login_page.dart';
@@ -15,7 +16,7 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
-
+import 'package:flutter_app_paul_test/models/vehicle_model.dart';
 import 'addvehicle_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -30,6 +31,8 @@ class _DashboardState extends State<DashboardPage> {
   FirebaseUser currentuser;
   String userId;
   String user_name;
+  var _theList = ["1", "2", "3"];
+  int _vehiclenb = 0;
 
   @override
   void initState() {
@@ -239,7 +242,7 @@ class _DashboardState extends State<DashboardPage> {
                                                                     .fromLTRB(
                                                                 0, 8, 30, 0),
                                                         child: Text(
-                                                            'Number of vehicles: ${snapshot.data.documents[0].data['nbofvehicles'].toString()}',
+                                                            'Number of vehicles: ${_vehiclenb.toString()}',
                                                             style: TextStyle(
                                                                 fontSize: 14,
                                                                 color: Colors
@@ -311,9 +314,21 @@ class _DashboardState extends State<DashboardPage> {
                                             children: <Widget>[
                                               GestureDetector(
                                                 onTap: () {
-                                                  print('Tapped!');
+                                                  VehicleModel vehicle_object =
+                                                      new VehicleModel(
+                                                          nvis_color: "",
+                                                          nvis_cartype: "",
+                                                          nvis_status: "",
+                                                          category: "Class I",
+                                                          immatriculation: "",
+                                                          userId: "",
+                                                          filePath: "",
+                                                          picture_file_url: "",
+                                                          update: false);
                                                   Navigator.pushNamed(
-                                                      context, '/addvehicle');
+                                                      context, '/addvehicle',
+                                                      arguments:
+                                                          vehicle_object);
                                                 },
                                                 child: Container(
                                                     height: 100,
@@ -361,33 +376,202 @@ class _DashboardState extends State<DashboardPage> {
                       StreamBuilder(
                           stream: db
                               .collection('vehicles')
-                              .where('userid', isEqualTo: userId)
+                              .where('userId', isEqualTo: userId)
                               .snapshots(),
                           builder: (BuildContext context,
                               AsyncSnapshot<QuerySnapshot> snapshot) {
                             if (snapshot.hasData) {
+                              _vehiclenb = snapshot.data.documents.length;
                               return SliverList(
-                                delegate: new SliverChildListDelegate(
+                                delegate: SliverChildListDelegate(
                                   snapshot.data.documents
                                       .map((DocumentSnapshot document) {
-                                    return Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          24, 0, 0, 10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text(document['type'] +
-                                              ' - ' +
-                                              document['immatriculation']),
-                                          Text(document['category'] +
-                                              ': ' +
-                                              document['costperpassage']
-                                                  .toString() +
-                                              '/passage'),
-                                        ],
-                                      ),
-                                    );
+                                    return Dismissible(
+                                        key: new ObjectKey(document),
+                                        background: new Container(
+                                          color: Colors.red,
+                                          child: Align(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: <Widget>[
+                                                SizedBox(
+                                                  width: 20,
+                                                ),
+                                                Icon(
+                                                  Icons.delete,
+                                                  color: Colors.white,
+                                                ),
+                                                Text(
+                                                  " Delete",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                  textAlign: TextAlign.left,
+                                                ),
+                                              ],
+                                            ),
+                                            alignment: Alignment.centerLeft,
+                                          ),
+                                        ),
+                                        secondaryBackground: new Container(
+                                          color: Colors.green,
+                                          child: Align(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: <Widget>[
+                                                Icon(
+                                                  Icons.edit,
+                                                  color: Colors.white,
+                                                ),
+                                                Text(
+                                                  " Update",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                  textAlign: TextAlign.right,
+                                                ),
+                                                SizedBox(
+                                                  width: 20,
+                                                ),
+                                              ],
+                                            ),
+                                            alignment: Alignment.topCenter,
+                                          ),
+                                        ),
+//                                        onDismissed:
+//                                            (DismissDirection direction) {},
+                                        confirmDismiss: (direction) async {
+                                          bool _res;
+                                          if (direction ==
+                                              DismissDirection.startToEnd) {
+                                            _res = await showDialog(
+                                                context: context,
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return AlertDialog(
+                                                    content: Text(
+                                                        "Are you sure you want to delete $document?"),
+                                                    actions: <Widget>[
+                                                      FlatButton(
+                                                        child: Text(
+                                                          "Cancel",
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.black),
+                                                        ),
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      ),
+                                                      FlatButton(
+                                                        child: Text(
+                                                          "Delete",
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.red),
+                                                        ),
+                                                        onPressed: () {
+                                                          // Delete the item from DB etc..
+                                                          setState(() {
+                                                            db
+                                                                .collection(
+                                                                    'vehicles')
+                                                                .document(document
+                                                                    .documentID)
+                                                                .delete();
+                                                          });
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      ),
+                                                    ],
+                                                  );
+                                                });
+                                          } else {
+                                            // Navigate to edit page;
+                                            VehicleModel vehicle_object =
+                                                new VehicleModel(
+                                                    nvis_color: document
+                                                        .data["nvis_color"],
+                                                    nvis_cartype: document
+                                                        .data["nvis_cartype"],
+                                                    nvis_status: document
+                                                        .data["nvis_status"],
+                                                    category: document
+                                                        .data["category"],
+                                                    immatriculation:
+                                                        document.data[
+                                                            "immatriculation"],
+                                                    userId:
+                                                        document.data["userId"],
+                                                    filePath: document
+                                                        .data["picture_file"],
+                                                    picture_file_url:
+                                                        document.data[
+                                                            "picture_file_url"],
+                                                    update: true);
+
+                                            if (vehicle_object.filePath != "") {
+                                              final FirebaseStorage _storage =
+                                                  FirebaseStorage(
+                                                      storageBucket:
+                                                          'gs://paultestlogin.appspot.com');
+                                              String filePath =
+                                                  vehicle_object.filePath;
+                                              final ref = _storage
+                                                  .ref()
+                                                  .child(filePath);
+// no need of the file extension, the name will do fine.
+                                              vehicle_object
+                                                  .setVehicleurlfilePath(
+                                                      await ref
+                                                          .getDownloadURL());
+//      var _downloadTask = _storage.ref().child(filePath).writeToFile(filePath);
+                                            }
+                                            Navigator.pushNamed(
+                                                context, '/addvehicle',
+                                                arguments: vehicle_object);
+                                          }
+                                          return _res;
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              24, 0, 0, 10),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Text(
+                                                  document
+                                                              .data[
+                                                          'nvis_cartype'] +
+                                                      '  ' +
+                                                      document
+                                                          .data['nvis_color'] +
+                                                      ' - ' +
+                                                      document
+                                                              .data[
+                                                          'immatriculation'] +
+                                                      ' - ' +
+                                                      document
+                                                          .data['category'] +
+                                                      ': ' +
+                                                      (_providerVariables
+                                                                  .tariffs[
+                                                              document.data[
+                                                                  'category']])
+                                                          .toString() +
+                                                      " N/pass",
+                                                  style:
+                                                      TextStyle(fontSize: 15))
+                                            ],
+                                          ),
+                                        ));
                                   }).toList(),
                                 ),
                               );

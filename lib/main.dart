@@ -6,9 +6,11 @@ import 'package:flutter_app_paul_test/pages/forgotpassword_page.dart';
 import 'package:flutter_app_paul_test/pages/home_page.dart';
 import 'package:flutter_app_paul_test/pages/login_page.dart';
 import 'package:flutter_app_paul_test/pages/payment_page.dart';
+import 'package:flutter_app_paul_test/pages/profile_page.dart';
 import 'package:flutter_app_paul_test/pages/root_page.dart';
 import 'package:flutter_app_paul_test/pages/signup_page.dart';
 import 'package:flutter_app_paul_test/pages/splashscreen_page.dart';
+import 'package:flutter_app_paul_test/pages/userprofile_page.dart';
 import 'package:flutter_app_paul_test/services/picture_scanner.dart';
 import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
@@ -55,7 +57,8 @@ class MyApp extends StatelessWidget {
             '/signup': (context) => SignupPage(),
             '/forgotpassword': (context) => ForgotPasswordPage(),
             '/addvehicle': (context) => AddVehicle(),
-            '/PictureScanner': (context) => PictureScanner()
+            '/PictureScanner': (context) => PictureScanner(),
+            '/profile': (context) => UserProfilePage()
           },
           theme: new ThemeData(
 //              appBarTheme: AppBarTheme(

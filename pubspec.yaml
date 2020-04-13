@@ -14,7 +14,7 @@ description: A new Flutter application.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.2.0 <3.0.0"
+  sdk: ">=2.2.2 <3.0.0"
 
 dependencies:
 
@@ -34,6 +34,9 @@ dependencies:
   image_cropper: ^1.2.1
   image_picker: ^0.6.3+4
   firebase_ml_vision: ^0.9.3+8
+  carousel_slider: ^1.4.1
+  cached_network_image: ^2.0.0
+  auto_size_text:
 
   flutter:
     sdk: flutter
@@ -80,6 +83,13 @@ flutter:
    - family:  MyFlutterApp
      fonts:
       - asset: assets/fonts/MyFlutterApp.ttf
+   - family:  Futura BT Pro Book
+     fonts:
+       - asset: assets/fonts/futura-book-bt.ttf
+   - family:  OPTIKorinnaExtraBoldAgency
+     fonts:
+       - asset: assets/fonts/OPTIKorinnaExtraBoldAgency.otf
+
   # fonts:
   #   - family: Schyler
   #     fonts:

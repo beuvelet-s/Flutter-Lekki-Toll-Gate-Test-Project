@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_paul_test/pages/dashboard_page.dart';
 import 'package:flutter_app_paul_test/pages/payment_page.dart';
+import 'package:flutter_app_paul_test/pages/profile_page.dart';
 import 'package:flutter_app_paul_test/pages/qrcodescanning_page.dart';
+import 'package:flutter_app_paul_test/pages/userprofile_page.dart';
 import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/flushbar_service.dart';
@@ -35,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   String user_name;
   GlobalKey bottomNavigationKey = GlobalKey();
 //  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +48,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> getThingsonStartUp() async {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
+    final Firestore db = Provider.of<Firestore>(context, listen: false);
     final providerVariables _globalvariables =
         Provider.of<providerVariables>(context, listen: false);
     currentuser = await auth.getCurrentUser();
@@ -55,6 +59,16 @@ class _HomePageState extends State<HomePage> {
         context: context,
         message: 'Welcome Back ${user_name.split(" ")[0]} !',
         duration: 3);
+    // Load tariffs
+    await db.collection('tariffs').getDocuments().then((querySnapshot) {
+      querySnapshot.documents.forEach((documentSnapshot) async {
+        _globalvariables.addtariffs(documentSnapshot.data['vehicle_class'],
+            documentSnapshot.data['toll_tariff']);
+      });
+    }).catchError((e) {
+      print("error trying to read secret db: $e");
+      _globalvariables.seterrorMessage(e);
+    });
   }
 
   @override
@@ -78,9 +92,11 @@ class _HomePageState extends State<HomePage> {
           _globalVariables.setselecteditem(index);
         },
         children: <Widget>[
-          DashboardPage(),
           PaymentPage(),
+          DashboardPage(),
           QRCodePage(),
+          UserProfilePage(),
+          UserProfilePage2(),
         ],
         pageSnapping: true,
         physics: BouncingScrollPhysics(),
@@ -146,6 +162,7 @@ class _HomePageState extends State<HomePage> {
         selectedIndex: _globalVariables.selecteditem,
         onSelectTab: (index) {
 //          setState(() {
+//          _globalVariables.clearVehicle_image();
           _globalVariables.setselecteditem(index);
           _globalVariables.pageController.animateToPage(
             index,
@@ -176,13 +193,13 @@ class _HomePageState extends State<HomePage> {
             label: 'PAY',
           ),
           FFNavigationBarItem(
-            iconData: Icons.message,
-            label: 'Settings',
-          ),
-          FFNavigationBarItem(
             iconData: Icons.account_circle,
             label: 'User',
           ),
+          FFNavigationBarItem(
+            iconData: Icons.message,
+            label: 'Settings',
+          )
         ],
       ),
       body: Stack(children: <Widget>[

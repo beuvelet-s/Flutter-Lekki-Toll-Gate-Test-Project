@@ -20,13 +20,17 @@ normalflushbar({BuildContext context, message, duration}) {
           ],
         ),
         Positioned(
-            bottom: 0,
-            right: 0,
-            top: -50,
-            child: Container(
-                height: 50,
-                width: 50,
-                child: Center(child: Image.asset('assets/logoLCCLekki.png')))),
+          bottom: 0,
+          right: 0,
+          top: -50,
+          child: Container(
+            height: 50,
+            width: 50,
+            child: Center(
+              child: Image.asset('assets/logoLCCLekki.png'),
+            ),
+          ),
+        ),
       ],
       overflow: Overflow.visible,
     ),

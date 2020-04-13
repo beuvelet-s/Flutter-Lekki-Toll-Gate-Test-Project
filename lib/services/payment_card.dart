@@ -174,7 +174,7 @@ class CardUtils {
       case 'Others':
         icon = new Icon(
           Icons.credit_card,
-          size: 40.0,
+          size: 35.0,
           color: Colors.grey[600],
         );
         break;

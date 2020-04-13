@@ -96,7 +96,7 @@ class LabelDetectorPainter extends CustomPainter {
           textDirection: TextDirection.ltr),
     );
 
-    builder.pushStyle(ui.TextStyle(color: Colors.green));
+    builder.pushStyle(ui.TextStyle(color: Colors.red));
     for (ImageLabel label in labels) {
       builder.addText('Label: ${label.text}, '
           'Confidence: ${label.confidence.toStringAsFixed(2)}\n');

@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_app_paul_test/custom_flutter_widgets/card_widget.dart';
 import 'package:flutter_app_paul_test/custom_flutter_widgets/circularwidget.dart';
 import 'package:flutter_app_paul_test/custom_flutter_widgets/pin_entry_text_custom.dart';
 import 'package:flutter_app_paul_test/custom_flutter_widgets/showOtpFields.dart';
@@ -60,6 +61,7 @@ class _PaymentPageState extends State<PaymentPage> {
   List<FocusNode> focusToggle;
   int _nbdigitOPT = 6;
   bool _redrawotpfield = false;
+  Color _colorbackground = Colors.white;
   void _getCardTypeFrmNumber() {
     String input = CardUtils.getCleanedNumber(_cardnumcontrol.text);
     String cardType = CardUtils.getCardTypeFrmNumber(input);
@@ -106,6 +108,9 @@ class _PaymentPageState extends State<PaymentPage> {
             'response': _jsonbody,
             'message': 'Payment successfull'
           };
+          setState(() {
+            _errorMessage = 'Payment successfull';
+          });
         } else {
           print('Checkpendingcharge returns : false');
           _message = _jsonbody['message'];
@@ -298,6 +303,9 @@ class _PaymentPageState extends State<PaymentPage> {
               'response': _jsonbody,
               'message': 'Payment successfull'
             };
+            setState(() {
+              _errorMessage = 'Payment successfull';
+            });
           } else {
             if (status == true && _success != "success") {
               print('sendPIN returns : ${_jsonbody['data']['status']}');
@@ -361,6 +369,9 @@ class _PaymentPageState extends State<PaymentPage> {
               'response': _jsonbody,
               'message': 'Payment successfull'
             };
+            setState(() {
+              _errorMessage = 'Payment successfull';
+            });
           } else {
             if (status == true && _success != "success") {
               print('sendOTP returns : ${_jsonbody['data']['status']}');
@@ -385,11 +396,12 @@ class _PaymentPageState extends State<PaymentPage> {
         }
         ;
       }).catchError((e) {
-//      setState(() {
-//        _errorMessage = e;
-//      });
+        setState(() {
+          _errorMessage = e;
+        });
         print("Error in sendOTP : $e");
       });
+      _globalvariables.setotprequired(false);
       return _result;
     }
 
@@ -507,7 +519,9 @@ class _PaymentPageState extends State<PaymentPage> {
 
     // Perform login or signup
     Future<bool> validateAndSubmitPay() async {
-      _errorMessage = "";
+      setState(() {
+        _errorMessage = "";
+      });
       bool _validated = false;
       if (FormvalidatedPay()) {
         String userId;
@@ -574,63 +588,66 @@ class _PaymentPageState extends State<PaymentPage> {
     }
 
     Widget showExplanation() {
-      return Padding(
-        padding: EdgeInsets.fromLTRB(34.0, 10.0, 0.0, 0.0),
-        child: Container(
-            child: new Text('Fund Your Wallet',
-                style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold))),
-      );
+      return new Text('Fund Your Wallet',
+          style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.black,
+              fontWeight: FontWeight.bold));
     }
 
     Widget showFundingSourceInput() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(54, 0, 0, 0),
-            child:
-                Text('Select Funding Source', style: TextStyle(fontSize: 18)),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(50.0, 0, 50.0, 0.0),
-            child: DropdownButtonFormField<String>(
-              value: _sourceofFund,
-              items: [
-                DropdownMenuItem(
-                    value: "Debit Card", child: Text("Debit Card")),
-                DropdownMenuItem(
-                    value: "Bank Account", child: Text("Bank Account"))
-              ],
-              onChanged: (String newValue) {
-                print("value : $newValue");
-                setState(() {
-                  _sourceofFund = newValue;
-                });
-              },
-              decoration: new InputDecoration(
+//          Padding(
+//            padding: const EdgeInsets.fromLTRB(54, 0, 0, 0),
+//            child:
+//                Text('Select Funding Source', style: TextStyle(fontSize: 18)),
+//          ),
+          Container(
+//            height: 58,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(50.0, 0, 50.0, 0.0),
+              child: DropdownButtonFormField<String>(
                 isDense: true,
-                filled: true,
-                fillColor: Color(0xFFE8E8E8),
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                labelText: 'Funding Source',
-                alignLabelWithHint: false,
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(8.0),
+                value: _sourceofFund,
+                items: [
+                  DropdownMenuItem(
+                      value: "Debit Card",
+                      child: Text("Debit Card", maxLines: 1, softWrap: true)),
+                  DropdownMenuItem(
+                      value: "Bank Account",
+                      child: Text("Bank Account", maxLines: 1, softWrap: true))
+                ],
+                onChanged: (String newValue) {
+                  print("value : $newValue");
+                  setState(() {
+                    _sourceofFund = newValue;
+                  });
+                },
+                decoration: new InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: Color(0xFFE8E8E8),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                  labelText: 'Funding Source',
+                  alignLabelWithHint: false,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  labelStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide:
-                      const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                labelStyle: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey),
               ),
             ),
           ),
@@ -642,29 +659,89 @@ class _PaymentPageState extends State<PaymentPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(54, 20, 0, 0),
-            child: Text('Enter Card Number', style: TextStyle(fontSize: 18)),
+          Center(
+              child: Text('Enter Card Number', style: TextStyle(fontSize: 18))),
+          Container(
+            height: 60,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(50.0, 1.0, 50.0, 0.0),
+              child: new TextFormField(
+                maxLines: 1,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                focusNode: _cardFocus,
+                onFieldSubmitted: (term) {
+                  _fieldFocusChange(context, _cardFocus, _expiryFocus);
+                },
+                autofocus: true,
+                decoration: new InputDecoration(
+                  helperText: ' ',
+                  filled: true,
+                  fillColor: Color(0xFFE8E8E8),
+                  icon: CardUtils.getCardIcon(_paymentCard.type),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                  labelText: 'Debit Card Number',
+                  hintText: '#### #### #### ####',
+                  alignLabelWithHint: false,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  labelStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey),
+                ),
+                controller: _cardnumcontrol,
+                validator: CardUtils.validateCardNum,
+                inputFormatters: [
+                  WhitelistingTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(19),
+                  CardNumberInputFormatter(),
+                ],
+                onSaved: (String value) {
+                  print('onSaved = $value');
+                  print('Num controller has = ${_cardnumcontrol.text}');
+                  _paymentCard.number = CardUtils.getCleanedNumber(value);
+                },
+              ),
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(50.0, 1.0, 50.0, 0.0),
+        ],
+      );
+    }
+
+    Widget showExpiryDateInput() {
+      return Flexible(
+        child: Container(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(50.0, 0.0, 10.0, 0.0),
             child: new TextFormField(
+              controller: _expiryController,
               maxLines: 1,
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.datetime,
               textInputAction: TextInputAction.next,
-              focusNode: _cardFocus,
+              focusNode: _expiryFocus,
               onFieldSubmitted: (term) {
-                _fieldFocusChange(context, _cardFocus, _expiryFocus);
+                _fieldFocusChange(context, _expiryFocus, _cvvFocus);
               },
               autofocus: true,
               decoration: new InputDecoration(
+                helperText: ' ',
                 filled: true,
                 fillColor: Color(0xFFE8E8E8),
-                icon: CardUtils.getCardIcon(_paymentCard.type),
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                labelText: 'Debit Card Number',
-                hintText: '#### #### #### ####',
+                labelText: 'Expiry Date',
+                hintText: 'MM/YY',
                 alignLabelWithHint: false,
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Colors.grey, width: 1.0),
@@ -680,45 +757,97 @@ class _PaymentPageState extends State<PaymentPage> {
                     fontWeight: FontWeight.bold,
                     color: Colors.grey),
               ),
-              controller: _cardnumcontrol,
-              validator: CardUtils.validateCardNum,
+              validator: CardUtils.validateDate,
               inputFormatters: [
                 WhitelistingTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(19),
-                CardNumberInputFormatter(),
+                new LengthLimitingTextInputFormatter(4),
+                new CardMonthInputFormatter()
               ],
-              onSaved: (String value) {
-                print('onSaved = $value');
-                print('Num controller has = ${_cardnumcontrol.text}');
-                _paymentCard.number = CardUtils.getCleanedNumber(value);
+              onSaved: (value) {
+                List<String> expiryDate = CardUtils.getExpiryDate(value);
+                _paymentCard.month = expiryDate[0];
+                _paymentCard.year = expiryDate[1];
               },
             ),
           ),
-        ],
+        ),
       );
     }
 
-    Widget showExpiryDateInput() {
+    Widget showCVVInput() {
       return Flexible(
+        child: Container(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10.0, 00.0, 50.0, 0.0),
+            child: new TextFormField(
+              controller: _cvvController,
+              maxLines: 1,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              focusNode: _cvvFocus,
+              onFieldSubmitted: (term) {
+                _fieldFocusChange(context, _cvvFocus, _amountFocus);
+              },
+              autofocus: true,
+              decoration: new InputDecoration(
+                  helperText: ' ',
+                  filled: true,
+                  fillColor: Color(0xFFE8E8E8),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                  labelText: 'CVV',
+                  alignLabelWithHint: false,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        const BorderSide(color: Color(0xFFD97A00), width: 2.0),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  labelStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey)),
+              validator: CardUtils.validateCVV,
+              inputFormatters: [
+                WhitelistingTextInputFormatter.digitsOnly,
+                new LengthLimitingTextInputFormatter(3),
+              ],
+              onSaved: (value) {
+                _paymentCard.cvv = value;
+              },
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget showAmountInput() {
+      return Container(
+        height: 60,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(50.0, 15.0, 10.0, 0.0),
+          padding: const EdgeInsets.fromLTRB(50.0, 0.0, 50.0, 0.0),
           child: new TextFormField(
-            controller: _expiryController,
             maxLines: 1,
-            keyboardType: TextInputType.datetime,
+            keyboardType: TextInputType.number,
             textInputAction: TextInputAction.next,
-            focusNode: _expiryFocus,
+            focusNode: _amountFocus,
             onFieldSubmitted: (term) {
-              _fieldFocusChange(context, _expiryFocus, _cvvFocus);
+              _fieldFocusChange(context, _amountFocus, _pinFocus);
             },
             autofocus: true,
             decoration: new InputDecoration(
+              helperText: ' ',
               filled: true,
               fillColor: Color(0xFFE8E8E8),
               contentPadding:
                   EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-              labelText: 'Expiry Date',
-              hintText: 'MM/YY',
+              labelText: 'Enter Amount',
+              hintText: '######.##',
               alignLabelWithHint: false,
               enabledBorder: OutlineInputBorder(
                 borderSide: const BorderSide(color: Colors.grey, width: 1.0),
@@ -734,111 +863,17 @@ class _PaymentPageState extends State<PaymentPage> {
                   fontWeight: FontWeight.bold,
                   color: Colors.grey),
             ),
-            validator: CardUtils.validateDate,
+            controller: _cardnumcontrolAmount,
+            validator: CardUtils.validateAmount,
             inputFormatters: [
               WhitelistingTextInputFormatter.digitsOnly,
-              new LengthLimitingTextInputFormatter(4),
-              new CardMonthInputFormatter()
+              new LengthLimitingTextInputFormatter(8),
+              CurrencyPtBrInputFormatter()
             ],
             onSaved: (value) {
-              List<String> expiryDate = CardUtils.getExpiryDate(value);
-              _paymentCard.month = expiryDate[0];
-              _paymentCard.year = expiryDate[1];
+              _amount = CardUtils.getCleanedNumber(value);
             },
           ),
-        ),
-      );
-    }
-
-    Widget showCVVInput() {
-      return Flexible(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10.0, 15.0, 50.0, 0.0),
-          child: new TextFormField(
-            controller: _cvvController,
-            maxLines: 1,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-            focusNode: _cvvFocus,
-            onFieldSubmitted: (term) {
-              _fieldFocusChange(context, _cvvFocus, _amountFocus);
-            },
-            autofocus: true,
-            decoration: new InputDecoration(
-                filled: true,
-                fillColor: Color(0xFFE8E8E8),
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                labelText: 'CVV',
-                alignLabelWithHint: false,
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide:
-                      const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                labelStyle: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey)),
-            validator: CardUtils.validateCVV,
-            inputFormatters: [
-              WhitelistingTextInputFormatter.digitsOnly,
-              new LengthLimitingTextInputFormatter(3),
-            ],
-            onSaved: (value) {
-              _paymentCard.cvv = value;
-            },
-          ),
-        ),
-      );
-    }
-
-    Widget showAmountInput() {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(50.0, 15.0, 50.0, 0.0),
-        child: new TextFormField(
-          maxLines: 1,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.next,
-          focusNode: _amountFocus,
-          onFieldSubmitted: (term) {
-            _fieldFocusChange(context, _amountFocus, _pinFocus);
-          },
-          autofocus: true,
-          decoration: new InputDecoration(
-            filled: true,
-            fillColor: Color(0xFFE8E8E8),
-            contentPadding:
-                EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-            labelText: 'Enter Amount',
-            hintText: '######.##',
-            alignLabelWithHint: false,
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide:
-                  const BorderSide(color: Color(0xFFD97A00), width: 2.0),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            labelStyle: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-          controller: _cardnumcontrolAmount,
-          validator: CardUtils.validateAmount,
-          inputFormatters: [
-            WhitelistingTextInputFormatter.digitsOnly,
-            new LengthLimitingTextInputFormatter(8),
-            CurrencyPtBrInputFormatter()
-          ],
-          onSaved: (value) {
-            _amount = CardUtils.getCleanedNumber(value);
-          },
         ),
       );
     }
@@ -894,6 +929,7 @@ class _PaymentPageState extends State<PaymentPage> {
           padding: EdgeInsets.fromLTRB(100.0, 20.0, 100.0, 5.0),
           child: SizedBox(
             height: 56.0,
+            width: 200,
             child: RaisedButton(
               focusNode: _payFocus,
               elevation: 5.0,
@@ -945,29 +981,74 @@ class _PaymentPageState extends State<PaymentPage> {
     Widget _showForm(BuildContext context) {
       return Stack(children: <Widget>[
         Container(
-            child: new Form(
-          key: _formKeypay,
-          autovalidate: _autoValidate,
-          child: new ListView(
-            shrinkWrap: true,
-            children: <Widget>[
-              SizedBox(height: 15),
-              showExplanation(),
-              SizedBox(height: 20),
-              showFundingSourceInput(),
-              showCardNumberInput(),
-              Row(children: [showExpiryDateInput(), showCVVInput()]),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-                child: Container(height: 6.0, color: Color(0xFFDCDCDC)),
-              ),
-              showAmountInput(),
+          child: new Form(
+              key: _formKeypay,
+              autovalidate: _autoValidate,
+              child: new ListView(shrinkWrap: true, children: <Widget>[
+                Container(
+                    height: 250,
+                    child: ListView.builder(
+                        physics: BouncingScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: testcards.length,
+                        itemBuilder: (BuildContext context, int index) {
+//                    ListView(
+//                        shrinkWrap: true,
+//                        scrollDirection: Axis.horizontal,
+//                        children: <Widget>[
+                          return Container(
+                            height: 240,
+                            child: Draggable(
+                                data: testcards[index],
+                                maxSimultaneousDrags: 1,
+                                feedback: Opacity(
+                                    opacity: 0.5, child: testcards[index]),
+                                childWhenDragging: Container(),
+                                child: testcards[index]),
+                          );
+                        })),
+                Stack(children: <Widget>[
+                  Container(height: 30),
+                  Positioned(
+                      top: 10,
+                      child: Container(
+                          height: 6.0,
+                          width: _Screenwidth,
+                          color: Color(0xFFDCDCDC))),
+                  Center(child: Container(child: showExplanation())),
+                ]),
+                DragTarget<CardWidget>(onWillAccept: (CardWidget carddata) {
+                  _colorbackground = Colors.lime;
+                  return true;
+                }, onLeave: (CardWidget carddata) {
+                  _colorbackground = Colors.white;
+                }, onAccept: (CardWidget carddata) {
+                  _cardnumcontrol.text =
+                      CardUtils.getCleanedNumber(carddata.cardnum);
+                  _expiryController.text = carddata.expiry;
+                  _cvvController.text = carddata.cvv;
+                  _sourceofFund = "Debit Card";
+                  _colorbackground = Colors.white;
+                }, builder: (context, incoming, rejected) {
+                  return Container(
+                    color: _colorbackground,
+                    child: Column(
+                      children: <Widget>[
+                        showErrorMessage(),
+                        showFundingSourceInput(),
+                        showCardNumberInput(),
+                        SizedBox(height: 10),
+                        Row(children: [showExpiryDateInput(), showCVVInput()]),
+                        SizedBox(height: 10),
+                        showAmountInput(),
 //              showPINInput(),
-              showPAYButton(),
-              showErrorMessage(),
-            ],
-          ),
-        )),
+                        showPAYButton(),
+                      ],
+                    ),
+                  );
+                }),
+              ])),
+        ),
         _globalvariables.pinisrequired == true
             ? BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -1200,10 +1281,14 @@ class _PaymentPageState extends State<PaymentPage> {
                                               _globalvariables.fees)
                                     });
                                   });
-                                  _errorMessage = "Payment Successfull";
+                                  setState(() {
+                                    _errorMessage = "Payment Successfull";
+                                  });
                                 }).catchError((e) {
                                   print("update user balamce in users: $e");
-                                  _errorMessage = e;
+                                  setState(() {
+                                    _errorMessage = e;
+                                  });
                                 });
 //                                var userRef = await db
 //                                    .collection('users')

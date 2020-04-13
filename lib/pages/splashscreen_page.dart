@@ -26,6 +26,9 @@ class AnimatedLogo extends AnimatedWidget {
 
   Widget build(BuildContext context) {
     final animation = listenable as Animation<double>;
+    final providerVariables _providerVariables =
+        Provider.of<providerVariables>(context, listen: true);
+    _providerVariables.setScreenSize(context);
     return Center(
       child: Opacity(
         opacity: _opacityTween.evaluate(animation),
