@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app_paul_test/custom_flutter_widgets/circularwidget.dart';
-import 'package:flutter_app_paul_test/pages/root_page.dart';
-import 'package:flutter_app_paul_test/services/authentication.dart';
-import 'package:flutter_app_paul_test/custom_flutter_widgets/animatedMaterialPageRoute.dart';
+//import 'package:flutter_app_paul_test/pages/root_page.dart';
+//import 'package:flutter_app_paul_test/services/authentication.dart';
+//import 'package:flutter_app_paul_test/custom_flutter_widgets/animatedMaterialPageRoute.dart';
 import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:provider/provider.dart';
 
@@ -11,7 +11,6 @@ import 'dart:math';
 
 // #enddocregion ShakeCurve
 import 'package:flutter/animation.dart';
-import 'package:flutter/material.dart';
 
 //void main() => runApp(LogoApp());
 
@@ -36,7 +35,7 @@ class AnimatedLogo extends AnimatedWidget {
           margin: EdgeInsets.symmetric(vertical: 10),
           height: _sizeTween.evaluate(animation),
           width: _sizeTween.evaluate(animation),
-          child: Image.asset('assets/logoLCCLekki.png'),
+          child: Image.asset('assets/logolcclekki.png'),
         ),
       ),
     );

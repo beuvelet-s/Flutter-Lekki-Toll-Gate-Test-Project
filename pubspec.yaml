@@ -26,10 +26,19 @@ dependencies:
   awesome_dialog: ^0.1.3
   mask_text_input_formatter: ^1.0.6
   http: ^0.12.0+4
-  flushbar: ^1.9.1
+#  flushbar: ^1.10.0
+  flushbar: 1.9.1
+#  flushbar:
+#    git:
+#      url: git://github.com/valterh4ck3r/flushbar
+#      ref: master
+#  flushbar:
+#    git:
+#      url: https://github.com/AndreHaueisen/flushbar.git
+#      ref: 13c55a8
   country_code_picker: ^1.2.4
   qrscan: ^0.2.17
-  liquid_swipe: ^1.3.0
+#  liquid_swipe: ^1.3.0
   flutter_string_encryption: ^0.3.1
   image_cropper: ^1.2.1
   image_picker: ^0.6.3+4

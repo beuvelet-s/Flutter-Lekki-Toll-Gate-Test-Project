@@ -10,11 +10,10 @@ import 'package:flutter_app_paul_test/pages/userprofile_page.dart';
 import 'package:flutter_app_paul_test/services/providervariables.dart';
 import 'package:flutter_app_paul_test/services/authentication.dart';
 import 'package:flutter_app_paul_test/services/flushbar_service.dart';
-import 'package:liquid_swipe/Constants/Helpers.dart';
-import 'package:liquid_swipe/liquid_swipe.dart';
+//import 'package:liquid_swipe/Constants/Helpers.dart';
+//import 'package:liquid_swipe/liquid_swipe.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
-import 'package:flutter_app_paul_test/services/flushbar_service.dart';
 
 import '../my_flutter_app_icons.dart';
 
